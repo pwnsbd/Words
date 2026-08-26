@@ -36,6 +36,7 @@
     "appId": "com.words.journal",
     "productName": "Words",
     "asarUnpack": ["**/*.node", "node_modules/node-llama-cpp/**"],
+    "files": ["out/**/*", "resources/**/*"],
     "win": {
       "target": "nsis",
       "icon": "resources/icon.ico"
