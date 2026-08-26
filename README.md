@@ -115,8 +115,9 @@ A local-first journaling companion. See [words-app-brief.md](./words-app-brief.m
   testing in the running app.
 - **The custom write surface has no spellcheck or IME composition** — a trade-off of replacing the native
   `<textarea>` with a fully React-controlled surface for the writing-mode strikethrough feature.
-- **No packaged installer produced yet** (`npm run dist:win` exists and should work, just hasn't been run
-  for a real build).
+- **The installer is unsigned** — no code-signing certificate, so Windows SmartScreen flags it as an
+  unrecognized publisher on first run ("More info" → "Run anyway" gets past it). Fine for testing on your own
+  machine; would want fixing before handing this to anyone else.
 
 ## Requirements
 
@@ -180,7 +181,14 @@ telling apart a model problem from an app problem.
 npm run dist:win
 ```
 
-Produces an installer under `dist/`.
+Produces an installer under `dist/` (`Words Setup <version>.exe`, an NSIS one-click installer). `build.files`
+in `package.json` is scoped to `out/**/*` + `resources/**/*` specifically — without that, electron-builder
+packages the whole project directory by default, which breaks outright the moment a real GGUF file exists
+under `models/` (asar has a 4.2GB per-file limit). Model files are never bundled either way; the installed
+app downloads them itself on first run (or you place your own, same as running from source).
+
+Built installers are also published to [GitHub Releases](https://github.com/pwnsbd/Words/releases) on this
+repo.
 
 ## Where your data lives
 
