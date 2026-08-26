@@ -1,0 +1,953 @@
+/* Self-hosted rather than pulled from Google Fonts at runtime — this is a
+   local-first app, so the writing font shouldn't depend on a network call
+   or on whatever happens to be installed on the machine. Weights loaded:
+   just regular + italic, the only two this UI actually uses. */
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('./assets/fonts/Lora-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('./assets/fonts/Lora-Italic.woff2') format('woff2');
+}
+
+/* Two themes: "cream" (default) and "charcoal" — chosen in Settings, applied
+   by setting data-theme on <html>. Every color in this file is one of these
+   variables specifically so a theme switch just works everywhere at once;
+   nothing below should ever hardcode a color outside this block. */
+:root {
+  --paper: #f4ecdc;
+  --paper-dim: #ece2cd;
+  --ink: #3a332c;
+  --ink-soft: #6b6154;
+  --ink-faint: #a89d8a;
+  --parchment-a: #efe4cc;
+  --parchment-b: #e6d8b2;
+  --scroll-divider: rgba(58, 51, 44, 0.15);
+  --serif: 'Lora', Georgia, 'Palatino Linotype', 'Times New Roman', serif;
+  /* Writing-mode dial: green/yellow/red, but muted into the same warm
+     ink-on-parchment palette as everything else -- traffic-light meaning,
+     not traffic-light saturation. */
+  --mode-easy: #7c9473;
+  --mode-medium: #b98d3e;
+  --mode-hard: #a8553f;
+  /* Wax seal: murky (heavy days) vs. open/airy (light days) -- see
+     WaxSeal in App.tsx, which blends between these by mood. */
+  --seal-heavy: #5b2a24;
+  --seal-light: #c97a3d;
+}
+
+:root[data-theme='dark'] {
+  --paper: #2a2723;
+  --paper-dim: #35312a;
+  --ink: #e9e2d3;
+  --ink-soft: #b6ab95;
+  --ink-faint: #7d7362;
+  /* Kept warm/sepia rather than literal dark gray — still meant to read as
+     old paper, just by candlelight instead of daylight. */
+  --parchment-a: #3d3226;
+  --parchment-b: #2d2418;
+  --scroll-divider: rgba(233, 226, 211, 0.15);
+  /* Lifted a touch brighter than the light theme's so they still read
+     clearly against the darker paper. */
+  --mode-easy: #93ac83;
+  --mode-medium: #cda568;
+  --mode-hard: #c07a63;
+  --seal-heavy: #4a231f;
+  --seal-light: #d98f52;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Browsers don't let form controls inherit font-family by default —
+   textarea/input/button/select need it set explicitly or they silently
+   fall back to the OS UI font, which is exactly the mismatch this fixes. */
+textarea,
+input,
+button,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  overflow: hidden;
+  user-select: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+.stage {
+  height: 100vh;
+  width: 100vw;
+  perspective: 1800px;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.page {
+  flex: 1;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.page--leaving {
+  animation: pageLeave 280ms ease-in forwards;
+}
+
+.page--entering {
+  animation: pageEnter 320ms ease-out forwards;
+}
+
+@keyframes pageLeave {
+  from {
+    transform: none;
+    opacity: 1;
+  }
+  to {
+    transform: rotateY(-8deg) scale(0.97);
+    opacity: 0;
+  }
+}
+
+@keyframes pageEnter {
+  from {
+    transform: rotateY(8deg) scale(0.97);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ---------- Write surface ---------- */
+
+.write {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 9vh 14vw 6vh;
+  position: relative;
+}
+
+/* Not a native <textarea> -- a plain focusable div whose content is fully
+   derived from React state, so a "delete" can be redirected into a
+   strikethrough instead of an actual removal once a writing mode's budget
+   runs out (see handleEditorKeyDown in App.tsx). */
+.write__editor {
+  flex: 1;
+  width: 100%;
+  outline: none;
+  overflow-y: auto;
+  cursor: text;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 22px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  user-select: text;
+}
+
+.write__editor-placeholder {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.write__caret {
+  display: inline-block;
+  width: 1px;
+  height: 1.05em;
+  margin-left: 1px;
+  background: var(--ink);
+  vertical-align: text-bottom;
+  animation: caretBlink 1000ms steps(1) infinite;
+}
+
+@keyframes caretBlink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* A struck-through word: kept legible rather than hidden -- the whole point
+   of quill/ink mode is that the mistake stays visible. Shared by the write
+   surface and the read view. */
+.struck-run {
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-soft);
+  text-decoration-thickness: 1.5px;
+  opacity: 0.62;
+}
+
+.write__footer {
+  min-height: 3.2em;
+  padding-top: 1.5em;
+  display: flex;
+  align-items: flex-start;
+}
+
+/* One-time model-download consent -- a quiet notice, not a modal, so it
+   never blocks typing; a normal-flow sibling of the editor (not
+   absolutely positioned) so it just gently pushes the page down for its
+   one appearance rather than floating over anything. */
+.write__consent {
+  margin-bottom: 1.4em;
+  padding: 0.9em 1.1em;
+  border: 1px solid var(--paper-dim);
+  border-radius: 8px;
+  background: var(--paper-dim);
+  animation: fadeIn 900ms ease-out;
+}
+
+.write__consent-text {
+  margin: 0 0 0.6em;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.write__consent-actions {
+  display: flex;
+  gap: 1.4em;
+}
+
+.write__consent-actions .journal__link {
+  display: inline;
+  margin: 0;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+}
+
+.afterthought {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.reflection {
+  margin: 0;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--ink-soft);
+  animation: fadeIn 900ms ease-out;
+}
+
+/* Arrives a beat after the reflection, like a second, quieter thought —
+   never competing with it, and only shown when something genuinely echoes. */
+.resurfaced {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-faint);
+  animation: fadeIn 900ms ease-out 700ms backwards;
+}
+
+.resurfaced__preview {
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Journal (deeper layer) ---------- */
+
+.journal {
+  height: 100%;
+  padding: 8vh 14vw;
+  overflow-y: auto;
+  user-select: text;
+}
+
+.journal__title {
+  font-size: 20px;
+  font-weight: normal;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  margin: 0 0 2em;
+}
+
+.journal__empty {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* A passing observation, not a headline — same treatment as the reflection
+   line on the writing surface, just relocated to where patterns belong. */
+.journal__theme {
+  margin: -1.4em 0 2em;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ink-soft);
+  animation: fadeIn 900ms ease-out;
+}
+
+
+/* Quiet text links, not buttons — easy to ignore, discoverable when wanted.
+   Shared by "a letter from the past month" and "import old writing". */
+.journal__link {
+  display: block;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0 0 2em;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-faint);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 150ms ease;
+}
+
+.journal__link:hover {
+  text-decoration-color: var(--ink-faint);
+}
+
+.journal__link:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.journal__link:disabled:hover {
+  text-decoration-color: transparent;
+}
+
+.journal__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4em;
+}
+
+.journal__entry {
+  padding-bottom: 1.2em;
+  border-bottom: 1px solid var(--paper-dim);
+}
+
+.journal__entry-button {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 150ms ease;
+}
+
+.journal__entry-button:hover {
+  opacity: 1;
+}
+
+.journal__date {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+
+/* The mood reading, right beside the entry it belongs to — no chart, no
+   number, just a small mark: denser for a heavier day, fainter for a
+   lighter one. */
+.journal__mood {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+/* Import + settings, top-right of the journal view -- a matching pair,
+   import labeled (icon + word) since it's the less obvious of the two. */
+.journal__top-right {
+  position: absolute;
+  top: 5vh;
+  right: 6vw;
+  display: flex;
+  align-items: center;
+  gap: 1.6em;
+}
+
+.journal__import-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+  cursor: pointer;
+  opacity: 0.8;
+  transition:
+    opacity 200ms ease,
+    transform 150ms ease;
+}
+
+.journal__import-btn:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.journal__import-icon {
+  font-size: 15px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.journal__gear {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 24px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.7;
+  transition:
+    opacity 200ms ease,
+    transform 400ms ease;
+}
+
+.journal__gear:hover {
+  opacity: 1;
+  transform: rotate(50deg);
+}
+
+.journal__import-status {
+  margin: -1.4em 0 1.6em;
+  font-size: 13px;
+  color: var(--ink-faint);
+  animation: fadeIn 900ms ease-out;
+}
+
+.journal__preview {
+  font-size: 16px;
+  color: var(--ink);
+}
+
+/* ---------- Reading a past entry (unrolled as a scroll) ---------- */
+
+.read {
+  height: 100%;
+  padding: 6vh 6vw;
+  overflow-y: auto;
+  user-select: text;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.scroll {
+  width: 100%;
+  max-width: 620px;
+  height: fit-content;
+}
+
+.read__actions {
+  width: 100%;
+  max-width: 620px;
+  margin-top: 1.6em;
+  display: flex;
+  align-items: baseline;
+  gap: 1.5em;
+}
+
+.read__actions .journal__link {
+  margin: 0;
+}
+
+/* The rod the paper is rolled around — just a quiet capsule in the
+   existing ink tone, not a literal wood-grain illustration; the parchment
+   panel overlaps it slightly so it reads as tucked behind the curl. */
+.scroll__rod {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ink-soft);
+  opacity: 0.4;
+  position: relative;
+}
+
+.scroll__rod--top {
+  margin-bottom: -5px;
+}
+
+.scroll__rod--bottom {
+  margin-top: -5px;
+}
+
+.scroll__content {
+  position: relative;
+  background: radial-gradient(ellipse at center, var(--parchment-a) 55%, var(--parchment-b) 100%);
+  box-shadow: 0 10px 28px rgba(58, 51, 44, 0.16);
+  padding: 6vh 6vw 5.5vh;
+}
+
+/* The wax seal at the bottom of a scroll -- see WaxSeal in App.tsx for the
+   turbulence-distorted blob + embossed emblem; this just sizes it and
+   supplies the two mood-endpoint colors it blends between. */
+.scroll__seal {
+  width: 44px;
+  height: 44px;
+  margin: 3em auto 0;
+}
+
+.scroll__seal-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  /* Lifts the seal off the page as a pressed object rather than a flat
+     painted circle -- real wax casts a small shadow onto the paper. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+}
+
+.scroll__seal-blob {
+  fill: color-mix(in srgb, var(--seal-heavy) var(--seal-mix, 50%), var(--seal-light));
+}
+
+/* No reflection/mood yet -- an unstamped, neutral wax rather than picking
+   a mood that isn't there. */
+.scroll__seal--unset .scroll__seal-blob {
+  fill: var(--ink-faint);
+}
+
+.scroll__seal-emblem {
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.scroll__seal-emblem--shadow {
+  stroke: rgba(0, 0, 0, 0.35);
+  transform: translate(0.7px, 0.7px);
+}
+
+.scroll__seal-emblem--highlight {
+  stroke: rgba(255, 255, 255, 0.4);
+  transform: translate(-0.7px, -0.7px);
+}
+
+.read__date {
+  margin-bottom: 1.6em;
+}
+
+.read__text {
+  margin: 0 0 2em;
+  font-size: 20px;
+  line-height: 1.8;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.read__reflection {
+  padding-top: 1em;
+  border-top: 1px solid var(--scroll-divider);
+}
+
+.recap__letter {
+  font-style: italic;
+  color: var(--ink-soft);
+  animation: fadeIn 900ms ease-out;
+}
+
+/* ---------- Settings ---------- */
+
+.settings {
+  height: 100%;
+  padding: 8vh 14vw;
+  overflow-y: auto;
+  user-select: text;
+}
+
+.settings__group {
+  margin-bottom: 3em;
+}
+
+.settings__label {
+  font-size: 15px;
+  font-weight: normal;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  margin: 0 0 1em;
+}
+
+.settings__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9em;
+}
+
+.settings__option {
+  border: 1px solid var(--paper-dim);
+  background: transparent;
+  color: var(--ink-faint);
+  padding: 0.6em 1.3em;
+  border-radius: 999px;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.settings__option:hover {
+  color: var(--ink);
+}
+
+.settings__option--active {
+  border-color: var(--ink-soft);
+  color: var(--ink);
+  background: var(--paper-dim);
+}
+
+.settings__number {
+  width: 5em;
+  border: 1px solid var(--paper-dim);
+  background: transparent;
+  color: var(--ink);
+  padding: 0.55em 0.8em;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.settings__number:focus {
+  outline: none;
+  border-color: var(--ink-soft);
+}
+
+.settings__about-line {
+  font-size: 13px;
+  color: var(--ink-faint);
+  margin: 0.35em 0;
+}
+
+.settings__about-list {
+  margin: 0.4em 0 0.9em;
+  padding-left: 1.2em;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.settings__about-list li {
+  margin: 0.35em 0;
+}
+
+.settings__about-list strong {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+/* ---------- Corner controls ---------- */
+
+.corner {
+  position: absolute;
+  bottom: 5vh;
+  right: 6vw;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1;
+  padding: 0.5em;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 200ms ease;
+}
+
+.corner:hover {
+  opacity: 1;
+}
+
+/* The mark that opens the journal — kept legible at a glance rather than a
+   near-invisible detail; still quiet (muted tone, no fill/badge), just not
+   hidden. Sized by .notebook-icon below rather than font-size, since it's
+   a small bound-notebook icon rather than a text glyph -- same
+   bottom-right spot it's always been in, same "line" (bottom offset) as
+   the settings mark opposite it. */
+.corner--journal {
+  padding: 0.3em;
+}
+
+/* A plain bound notebook -- cover, a spine strip, a black pen resting
+   diagonally across it. Kept flat and simple on purpose (earlier attempts
+   at an animated open-book fan/flip never read right at this size); the
+   personality is in the click, not the resting shape. Clicking it gives
+   the whole notebook a small tactile press-and-spring bounce while the pen
+   wiggles like it's still settling, then the page actually turns. */
+.notebook-icon {
+  /* No position:relative here -- the button already gets position:absolute
+     from .corner (for bottom-right placement), and an absolutely
+     positioned element is just as valid a containing block for the
+     spine/body/ribbon children below. Setting relative here too would win
+     the cascade (same specificity, declared later) and silently knock the
+     button out of its corner into normal document flow. */
+  width: 26px;
+  height: 32px;
+  /* The pen is drawn in a fixed near-black, not a themed variable -- it's
+     an object color ("a black pen"), not UI ink, and var(--ink) would
+     turn light/cream in the dark theme instead of staying black. */
+  --pen-color: #17140f;
+}
+
+.notebook-icon__spine {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  bottom: 1px;
+  width: 6px;
+  border-radius: 2px 0 0 2px;
+  background: var(--ink);
+  opacity: 0.65;
+}
+
+.notebook-icon__body {
+  position: absolute;
+  inset: 0 0 0 5px;
+  border-radius: 0 3px 3px 0;
+  background: var(--ink-soft);
+  box-shadow: 0 2px 5px rgba(58, 51, 44, 0.22);
+  transition: transform 200ms ease;
+}
+
+.notebook-icon:hover .notebook-icon__body {
+  transform: translateY(-1px);
+}
+
+/* A pen barrel (pill) with a small triangular nib at one end, resting
+   diagonally across the middle of the cover -- centered (transform-origin
+   and position both keyed to its own middle, not one end) so it reads as
+   "resting across the notebook" rather than pinned in one corner. A fixed
+   dark border keeps it defined even against the dark theme's own
+   near-black tones. */
+.notebook-icon__pen {
+  position: absolute;
+  top: 14px;
+  left: 4px;
+  width: 22px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--pen-color);
+  border: 1px solid var(--scroll-divider);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transform-origin: center center;
+  transform: rotate(-32deg);
+}
+
+.notebook-icon__pen::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-top: 2.5px solid transparent;
+  border-bottom: 2.5px solid transparent;
+  border-left: 5px solid var(--pen-color);
+  transform: translateY(-50%);
+}
+
+.notebook-icon--active .notebook-icon__body {
+  animation: notebookPress 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.notebook-icon--active .notebook-icon__pen {
+  animation: penWiggle 480ms ease-out;
+}
+
+@keyframes notebookPress {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  35% {
+    transform: scale(0.9) rotate(-3deg);
+  }
+  70% {
+    transform: scale(1.05) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes penWiggle {
+  0% {
+    transform: rotate(-32deg);
+  }
+  25% {
+    transform: rotate(-18deg);
+  }
+  55% {
+    transform: rotate(-46deg);
+  }
+  80% {
+    transform: rotate(-26deg);
+  }
+  100% {
+    transform: rotate(-32deg);
+  }
+}
+
+.corner--write {
+  left: 6vw;
+  right: auto;
+  bottom: auto;
+  top: 5vh;
+  font-size: 26px;
+}
+
+/* Settings gear, top-right of the journal view -- mirrors the back arrow's
+   opposite corner. A quiet one-shot turn on hover, not a spinning loop. */
+/* Same gear as .journal__gear (journal view), same size, tucked bottom-left
+   of the writing surface instead -- kept quiet by opacity alone (not a
+   smaller size, so it still reads as "the same control" at a glance) so it
+   doesn't compete with the page for attention the way the journal mark or
+   the dial do. */
+.corner--settings-mini {
+  left: 6vw;
+  right: auto;
+  top: auto;
+  bottom: 5vh;
+  font-size: 24px;
+  opacity: 0.45;
+  transition:
+    opacity 200ms ease,
+    transform 400ms ease;
+}
+
+.corner--settings-mini:hover {
+  opacity: 0.85;
+  transform: rotate(50deg);
+}
+
+/* ---------- Writing-mode dial ---------- */
+
+/* Top-right of the writing surface -- an actual rotary knob (drag it
+   around, like turning a watch crown) that snaps to one of three
+   positions: pencil / quill / ink. */
+.dial-wrap {
+  position: absolute;
+  top: 5vh;
+  right: 6vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45em;
+}
+
+.dial {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--paper-dim);
+  background: var(--paper-dim);
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.dial:active {
+  cursor: grabbing;
+}
+
+.dial:focus-visible {
+  border-color: var(--ink-soft);
+}
+
+.dial__tick {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  transform: translate(-50%, -50%);
+}
+
+.dial__needle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 15px;
+  border-radius: 999px;
+  transform-origin: 50% 100%;
+  transition:
+    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 320ms ease;
+}
+
+.dial--dragging .dial__needle {
+  transition: background-color 320ms ease;
+}
+
+.dial__hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: background-color 320ms ease;
+}
+
+.dial__label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 320ms ease;
+}
+
