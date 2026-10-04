@@ -1,0 +1,82 @@
+[
+  {
+    "daysAgo": 90,
+    "text": "A journal could remind me of earlier ideas even when I describe them differently. I want to keep writing freely, then see a quiet link to the old entry when a thought returns. My notes should help me notice the threads I keep following."
+  },
+  {
+    "daysAgo": 85,
+    "text": "I keep postponing projects because I am afraid they will not be perfect. Today I rewrote the opening of my proposal six times instead of letting anyone read it. I wonder how much progress I lose by waiting for something flawless."
+  },
+  {
+    "daysAgo": 80,
+    "text": "I needed to remove duplicate values from an array while keeping their first appearance. This small JavaScript helper did it:\n\nfunction unique(items) {\n  return [...new Set(items)];\n}\n\nIt is useful for repeated tags before displaying them."
+  },
+  {
+    "daysAgo": 75,
+    "text": "My best work happens before the first meeting. I want to protect the first hour of the morning for one difficult task, with notifications turned off. Yesterday a quiet start helped me finish something I had avoided all week."
+  },
+  {
+    "daysAgo": 70,
+    "text": "I roasted potatoes with rosemary tonight. The kitchen smelled warm, and the edges came out wonderfully crisp. We ate slowly with the windows open and talked about nothing urgent. It was a simple, pleasant evening."
+  },
+  {
+    "daysAgo": 60,
+    "text": "I want my notebook to recognize a thought I had months ago despite different wording. Instead of calling it a brand-new idea, it could show the date and the exact older passage. That would let me follow how my thinking changes over time."
+  },
+  {
+    "daysAgo": 55,
+    "text": "My fear of making something imperfect stops me from getting started. The unfinished draft is not really waiting for better words; it is waiting for me to tolerate somebody seeing a rough first attempt. I sent one paragraph today and felt relieved."
+  },
+  {
+    "daysAgo": 50,
+    "text": "Today I wrote another way to deduplicate a list while preserving its original order:\n\nconst deduplicate = values => Array.from(new Set(values));\n\nIt takes repeated primitive values out of the collection. I have a feeling I solved this exact little problem in an earlier project."
+  },
+  {
+    "daysAgo": 45,
+    "text": "I blocked the opening hour of the workday for focused work. No messages, no calls, just the one problem that needs careful thought. Meetings can happen after that. The morning felt less scattered when I started with something of my own."
+  },
+  {
+    "daysAgo": 40,
+    "text": "The basil on the balcony has finally put out new leaves. I moved its pot into a sunnier corner and watered the soil instead of the leaves. Watching a plant grow is a lovely kind of slow progress."
+  },
+  {
+    "daysAgo": 28,
+    "text": "A writing companion should help me find an earlier version of an idea, even if the vocabulary has changed. I imagine finishing a note and seeing a small message: a similar thought, from June. The link would go straight to the original words."
+  },
+  {
+    "daysAgo": 25,
+    "text": "I noticed the same pattern again: polishing an idea privately until I no longer have time to test it. A rough version shared early would teach me more than another perfect-looking draft. Today I finally let a colleague read something unfinished."
+  },
+  {
+    "daysAgo": 22,
+    "text": "The tag picker was showing duplicates, so I used a Set to keep just the first occurrence of each string.\n\nconst uniqueTags = tags => [...new Set(tags)];\n\nThis is not a new algorithm, but it is a useful little tool to remember the next time a list repeats itself."
+  },
+  {
+    "daysAgo": 19,
+    "text": "Notifications used to decide how my day began. This week I kept the first sixty minutes free for uninterrupted work, before opening chat. Starting with one meaningful task makes the later meetings feel much less overwhelming."
+  },
+  {
+    "daysAgo": 16,
+    "text": "I took the train to visit an old friend on Saturday. We walked along the river and stopped at a tiny bakery. I had forgotten how much I enjoy a day with no carefully planned itinerary."
+  },
+  {
+    "daysAgo": 12,
+    "text": "I keep returning to the idea of a notebook that remembers with me. When I write something that echoes an old entry, I want it to gently point back to that earlier passage, even when the phrasing is completely different. It would make recurring ideas easier to see."
+  },
+  {
+    "daysAgo": 9,
+    "text": "The need to get everything right still delays my first step. I am trying to share an imperfect draft before I feel ready, rather than spending another week adjusting it alone. Sending something small today felt better than imagining something perfect."
+  },
+  {
+    "daysAgo": 6,
+    "text": "Another list needed repeated values removed without changing the order of the remaining items.\n\nfunction distinct(values) {\n  const seen = new Set();\n  return values.filter(value => {\n    if (seen.has(value)) return false;\n    seen.add(value);\n    return true;\n  });\n}\n\nThis explicit version makes the first-occurrence behavior easier to follow."
+  },
+  {
+    "daysAgo": 3,
+    "text": "I want to keep one quiet hour at the beginning of each day, before meetings and messages arrive. That protected time gives me space to finish a difficult piece of work. I have written some version of this promise to myself before."
+  },
+  {
+    "daysAgo": 1,
+    "text": "I tried grinding my coffee a little coarser this morning. The cup tasted less bitter, and I sat outside while it cooled. A bird kept landing on the fence beside me. Nothing much happened, and that was enough."
+  }
+]

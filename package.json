@@ -1,6 +1,6 @@
 {
   "name": "words",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "A local-first journaling companion that listens, never judges, and quietly gets to know you over time.",
   "main": "./out/main/index.js",
@@ -11,7 +11,12 @@
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "start": "electron-vite preview",
-    "dist:win": "electron-vite build && electron-builder --win"
+    "dist:win": "electron-vite build && electron-builder --win",
+    "test:memory": "node scripts/test-memory.mjs",
+    "test:memory:model": "node scripts/test-memory.mjs --model",
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "test:patterns": "node scripts/test-patterns.mjs",
+    "test:philosophy": "node scripts/verify-philosophy.mjs"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
@@ -24,7 +29,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
-    "electron": "^33.2.1",
+    "electron": "^33.4.11",
     "electron-builder": "^25.1.8",
     "electron-vite": "^2.3.0",
     "react": "^18.3.1",
@@ -35,11 +40,27 @@
   "build": {
     "appId": "com.words.journal",
     "productName": "Words",
-    "asarUnpack": ["**/*.node", "node_modules/node-llama-cpp/**"],
-    "files": ["out/**/*", "resources/**/*"],
+    "asarUnpack": [
+      "**/*.node",
+      "node_modules/node-llama-cpp/**"
+    ],
+    "files": [
+      "out/**/*",
+      "resources/**/*"
+    ],
     "win": {
       "target": "nsis",
       "icon": "resources/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "include": "build/installer.nsh"
     }
   }
 }

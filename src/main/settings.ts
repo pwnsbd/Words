@@ -13,11 +13,13 @@ import type { Settings, ResurfaceSensitivity } from '../shared/types'
 export type { Settings }
 
 const DEFAULT_SETTINGS: Settings = {
+  reflectionModel: 'existing',
+  embeddingModel: 'qwen',
   theme: 'light',
   resurfaceSensitivity: 'balanced',
   writingMode: 'pencil',
   quillDeleteLimit: 5,
-  modelDownloadAsked: false
+  modelsDir: null
 }
 
 function settingsPath(): string {
@@ -30,7 +32,8 @@ export function getSettings(): Settings {
   if (cached) return cached
   try {
     const raw = readFileSync(settingsPath(), 'utf-8')
-    cached = { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) }
+    cached = { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>),
+      reflectionModel: 'existing', embeddingModel: 'qwen' }
   } catch {
     // No settings file yet, or it's unreadable — fall back to defaults.
     cached = { ...DEFAULT_SETTINGS }
@@ -39,7 +42,7 @@ export function getSettings(): Settings {
 }
 
 export function updateSettings(patch: Partial<Settings>): Settings {
-  const next = { ...getSettings(), ...patch }
+  const next: Settings = { ...getSettings(), ...patch, reflectionModel: 'existing', embeddingModel: 'qwen' }
   cached = next
   try {
     mkdirSync(app.getPath('userData'), { recursive: true })
@@ -55,8 +58,8 @@ export function updateSettings(patch: Partial<Settings>): Settings {
 // out to feel over/under-eager in practice.
 const RESURFACE_THRESHOLDS: Record<ResurfaceSensitivity, number> = {
   rare: 0.8,
-  balanced: 0.72,
-  often: 0.62
+  balanced: 0.68,
+  often: 0.64
 }
 
 export function resurfaceSimilarityThreshold(): number {

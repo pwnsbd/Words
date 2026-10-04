@@ -1,8 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { JournalEntry, EntrySummary, Settings, ModelStatus, DownloadProgress } from '../shared/types'
+import type { JournalEntry, EntrySummary, MemoryMatch, PatternsSnapshot, Settings, ModelStatus, DownloadProgress, Letter, LetterSummary, LetterTimeframe } from '../shared/types'
 
 const api = {
+  listPatterns: (): Promise<PatternsSnapshot> => ipcRenderer.invoke('patterns:list'),
+  refreshPatterns: (): Promise<void> => ipcRenderer.invoke('patterns:refresh'),
+  dismissPattern: (id: string): Promise<PatternsSnapshot> => ipcRenderer.invoke('patterns:dismiss', id),
   saveEntry: (text: string): Promise<JournalEntry> => ipcRenderer.invoke('entries:save', text),
   listEntries: (): Promise<EntrySummary[]> => ipcRenderer.invoke('entries:list'),
   getEntry: (id: string): Promise<JournalEntry | null> => ipcRenderer.invoke('entries:get', id),
@@ -13,8 +16,10 @@ const api = {
     ipcRenderer.on('entries:reflection', listener)
     return () => ipcRenderer.removeListener('entries:reflection', listener)
   },
-  onResurfaced: (callback: (entry: EntrySummary) => void): (() => void) => {
-    const listener = (_event: unknown, entry: EntrySummary): void => callback(entry)
+  getMemories: (id: string): Promise<MemoryMatch[]> => ipcRenderer.invoke('entries:memories', id),
+  rebuildMemory: (): Promise<{ indexed: number; failed: number }> => ipcRenderer.invoke('memory:rebuild'),
+  onResurfaced: (callback: (payload: { id: string; matches: MemoryMatch[] }) => void): (() => void) => {
+    const listener = (_event: unknown, payload: { id: string; matches: MemoryMatch[] }): void => callback(payload)
     ipcRenderer.on('entries:resurfaced', listener)
     return () => ipcRenderer.removeListener('entries:resurfaced', listener)
   },
@@ -26,11 +31,28 @@ const api = {
     ipcRenderer.invoke('settings:update', patch),
   getModelStatus: (): Promise<ModelStatus> => ipcRenderer.invoke('models:status'),
   downloadModels: (): Promise<void> => ipcRenderer.invoke('models:download'),
+  chooseModelsDir: (): Promise<ModelStatus | null> => ipcRenderer.invoke('models:choose-dir'),
+  resetModelsDir: (): Promise<ModelStatus> => ipcRenderer.invoke('models:reset-dir'),
   onDownloadProgress: (callback: (progress: DownloadProgress) => void): (() => void) => {
     const listener = (_event: unknown, progress: DownloadProgress): void => callback(progress)
     ipcRenderer.on('models:download-progress', listener)
     return () => ipcRenderer.removeListener('models:download-progress', listener)
-  }
+  },
+  generateLetter: (
+    timeframe: LetterTimeframe,
+    periodLabel: string,
+    periodStart: string,
+    periodEnd: string
+  ): Promise<Letter | null> =>
+    ipcRenderer.invoke('letters:generate', timeframe, periodLabel, periodStart, periodEnd),
+  nextLetterPeriod: (
+    timeframe: LetterTimeframe
+  ): Promise<{ label: string; start: string; end: string } | null> =>
+    ipcRenderer.invoke('letters:next-period', timeframe),
+  listLetters: (timeframe?: LetterTimeframe): Promise<LetterSummary[]> =>
+    ipcRenderer.invoke('letters:list', timeframe),
+  getLetter: (id: string): Promise<Letter | null> => ipcRenderer.invoke('letters:get', id),
+  deleteLetter: (id: string): Promise<void> => ipcRenderer.invoke('letters:delete', id)
 }
 
 if (process.contextIsolated) {

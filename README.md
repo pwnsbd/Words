@@ -2,34 +2,58 @@
 
 A local-first journaling companion. See [words-app-brief.md](./words-app-brief.md) for the product brief.
 
+## Similar thoughts and lightweight models
+
+Words compares overlapping passages, so an idea buried in a long entry can connect to earlier writing with different wording. After saving, up to three matches show the older passage, its date, and an **open entry** link. Opening a saved entry also finds earlier matches. All earlier dates are eligible, including yesterday; the old 14-day exclusion is gone. The source passage remains visible when following a link.
+
+The basic configuration is **Llama 3.1 8B Instruct** for reflections and **Qwen3 Embedding 0.6B Q8_0** for memory. Settings shows this fixed pair; the alternative model selectors have been removed. Older model preferences migrate to this configuration on restart. Missing model files download automatically. No journal content is uploaded; developer environment overrides remain available.
+
+Old whole-entry embeddings are migrated as needed. A model/file/prefix/version identity keeps vectors from different embedding models separate, even if their dimensions match. **Rebuild memory with the active model** processes all saved writing explicitly. See [model assessment and validation](docs/memory-models.md) for recommendations, limitations, and test results.
+
+## Patterns: ideas and ways of thinking
+
+The knotted-thread button directly above the journal opens **Patterns**, in the same paper-and-ink theme. A pattern needs matching passages from at least three different entries on three different days. Every included passage must be similar to every other; a chain of loose matches is not enough. Llama names recurring ideas, philosophical questions or tensions, and explicit ways of reasoning, including questioning assumptions or weighing opposing values. It rejects groups that share only mood or tone and does not assign a personality or philosophical identity. Changes of position can belong to the same recurring question. Dates, counts, and the chronological excerpts come from the entries themselves.
+
+Expand a pattern to read its history, follow an excerpt to the original entry, then return to Patterns. **These aren’t related** dismisses a grouping locally, including substantially overlapping groups that grow later. Deleting a source hides the affected cached pattern immediately; background recalculation uses the remaining entries. Nothing diagnoses the writer or scores their progress.
+
+Analysis upgrades re-check older results while preserving dismissals. Results and dismissals are stored locally in `idea-patterns.json` beside the journal. Saved results load before background updates complete. Updates run after saves, imports, deletions, memory rebuilds, or opening Patterns. If a model is unavailable, the page explains that it cannot finish and offers a retry. No new models or runtime packages are needed.
+
+`npm run test:patterns` checks grouping, distinct dates, model identity, chain rejection, cached labeling, persistent dismissals, deletion, and retry. `electron scripts/smoke-patterns.mjs` (after building and seeding the samples) runs an isolated real-model UI test on copies of the 20 sample entries. Large journals may need a faster clustering/index implementation later; the first version uses a deterministic in-memory scan.
+
 ## What's built
 
-- **Model download, with a one-time consent first.** If either default model file is missing the first time
-  you launch the app, a quiet banner on the writing page asks — "Words works better with two local models
-  (about 5GB total, downloaded once). Download them now?" — before anything happens; it never blocks typing,
-  and it never asks again after you answer either way (tracked by `settings.modelDownloadAsked`). Say yes
-  and `src/main/modelDownload.ts` streams the same two files the table below already recommended, straight
-  from Hugging Face, to a `.part` file that only gets renamed into place once it's actually complete — so an
-  interrupted download is never mistaken for a real model. Progress (and a manual download/retry any time
-  after, whether you said "not now" or a download failed) lives in Settings → Local models. Placing your own
-  files by hand, as described below, still works exactly as before and skips the download for whichever file
-  is already there.
+- **The models fetch themselves, in the background, on first run.** No prompt. If either GGUF file is
+  missing when the app starts, `src/main/index.ts` kicks off `src/main/modelDownload.ts`, which streams the
+  selected files straight from Hugging Face into the models folder — to a `.part` file
+  renamed into place only once complete, so an interrupted download is never mistaken for a real model. The
+  writing page carries a quiet, non-blocking "setting up the local models…" line while it runs (and a soft
+  "didn't finish — retry in Settings" line if it fails); typing and saving are never gated on it. Progress
+  and a manual retry live in Settings → Local models. `downloadMissingModels()` skips whichever file is
+  already present, so dropping your own files in by hand still works and short-circuits the download.
+- **By default the models live inside the app, and an uninstall takes them with it.** Packaged, the models
+  folder is `<install dir>\models\` — the NSIS uninstaller clears the install directory (plus an explicit
+  `RMDir /r "$INSTDIR\models"` in `build/installer.nsh` for the files added post-install), so the models never
+  get orphaned. Journal entries live in `%APPDATA%\words\` and normally survive — but the uninstaller now
+  **asks** ("Also delete your Words journal?", default No) and wipes `%APPDATA%\words` if you say yes.
+  (If the app was installed somewhere unwritable — Program Files with elevation — the models fall back to
+  `%APPDATA%\words\models\` and go with the journal in that prompt.) In dev
+  the folder is `models/` at the project root.
+- **The models folder is yours to move.** Settings → Local models has a "change folder" control (native
+  picker, any drive) and "use default location". Either one **moves the existing files** to the new spot
+  (rename on the same volume, copy-then-delete across volumes — the UI shows "moving model files…") rather
+  than re-downloading, then drops the warm model contexts so the next reflection loads from the new place
+  with no restart. Anything still missing after the move is downloaded. Resolution precedence:
+  `WORDS_MODELS_DIR` env var → `settings.modelsDir` (the folder picked in the app) → the built-in default
+  above.
 - Write-first entry screen: opens straight to a blank page, no dashboard.
-- Save on `Ctrl/Cmd+Enter`. Entries are saved instantly as plain JSON files under your local user data
+- Save on `Ctrl+Enter`. Entries are saved instantly as plain JSON files under your local user data
   folder — nothing is sent anywhere.
 - After saving, a soft one-line reflection quietly fades in once the local model responds (this never
   blocks the writing surface — if the model isn't running, the entry still saves fine, just without a line).
   The reflection describes what the entry *sounds like* as writing ("there's a tired, worn-down quality to
   this") rather than diagnosing how you feel ("you're feeling...") — see `REFLECTION_SYSTEM_PROMPT` in
   `src/main/llamacpp.ts`.
-- **Resurfacing**: each entry is embedded, and if a genuinely similar entry from 14+ days ago exists, it
-  fades in quietly a beat after the reflection: "you wrote something like this on [date]." Never forced —
-  most saves won't surface anything, and that's the point. How eager it is ("rarely" / "sometimes" /
-  "often") is a Settings option, backed by `RESURFACE_THRESHOLDS` in `src/main/settings.ts`. The lookup
-  itself goes through `src/main/similarityIndex.ts` — a `SimilarityIndex` interface with a brute-force,
-  in-memory implementation behind it. Fine at least into the low thousands of entries; if it ever needs to
-  be smarter (a real vector index) for someone with years of daily entries, that's a new class implementing
-  the same interface, not a rewrite of how resurfacing works.
+- **Resurfacing** uses passage embeddings and dated source links, independently of reflections. Sensitivity is configurable. Matches suggest related ideas; they do not establish that two thoughts or programs are equivalent.
 - **Mood mark**: alongside the reflection, the model also rates the entry's emotional weight (-2 to 2,
   never shown as a number). Each entry in the journal view carries a small dot beside its date — denser
   for a heavier day, fainter for a lighter one — sitting right next to the entry it belongs to rather than
@@ -59,7 +83,8 @@ A local-first journaling companion. See [words-app-brief.md](./words-app-brief.m
   revised afterward is meant to make the moment of writing it a little more considered.
 - **Writing mode**: an actual rotary dial, top-right of the writing surface — drag it around like a watch
   crown (or focus it and use the arrow keys) to turn between three modes — **pencil** (unlimited edits,
-  ordinary character-by-character backspace), **quill** (a per-entry budget of whole *words* you can correct,
+  ordinary character-by-character backspace, with Ctrl+Backspace / Alt+Backspace to drop the whole
+  previous word), **quill** (a per-entry budget of whole *words* you can correct,
   default 5, tunable in Settings — a correction is a word, found by splitting on whitespace, not a character,
   so backspace removes a full word at a time; once the budget's spent, that's it, no more edits at all, same
   as after the entry's saved), and **ink** (no real deletions, ever, from the very first keystroke — a delete
@@ -83,8 +108,7 @@ A local-first journaling companion. See [words-app-brief.md](./words-app-brief.m
   sensitivity, and quill mode's per-entry correction budget live in the Settings screen, along with an
   "About Words" section explaining what the app does and what each writing mode means — the writing surface
   itself stays free of explanation text. The writing mode (pencil/quill/ink) is still switched from its own
-  dial on the writing surface, not from here. Model file paths are still env-var-only (see below) to keep
-  this from turning into a control panel.
+  dial on the writing surface, not from here. The fixed model pair is shown below; custom filenames and embedding prefixes remain developer environment overrides.
 - **App icon**: a small hand-drawn pen-and-ink-trail mark (`resources/icon.svg` — regenerate the `.ico`/
   `.png` via `node scripts/make-icon.mjs` if it's ever redesigned; that script's own dependencies,
   `sharp`/`png-to-ico`, are intentionally *not* in package.json — install them with
@@ -108,11 +132,8 @@ A local-first journaling companion. See [words-app-brief.md](./words-app-brief.m
   save time, with whichever model was loaded then. Comparing two models on the same text means re-saving it
   as a fresh entry under each — see `sample-entries.md` for a ready-made set to do that with.
 - **Old journal import is `.txt`/`.md` only** — no PDF, no other journaling apps' export formats.
-- **Model *choice* is still fixed** — automatic download always fetches the same two default models; there's
-  no in-app picker for a different one. Custom filenames/paths are still env-var only (see below), to keep
-  Settings from turning into a control panel.
-- **No automated tests** — everything's been verified via `npm run typecheck`/`npm run build` plus manual
-  testing in the running app.
+- **Matching needs broader evaluation** — Qwen has been exercised locally on paraphrases and code. Similarity thresholds are starting values, not calibrated probabilities.
+- **Code equivalence is not verified** — embeddings can match code with opposite behavior. This feature recalls related writing; it is not a duplicate-code proof or an assessment of originality.
 - **The custom write surface has no spellcheck or IME composition** — a trade-off of replacing the native
   `<textarea>` with a fully React-controlled surface for the writing-mode strikethrough feature.
 - **The installer is unsigned** — no code-signing certificate, so Windows SmartScreen flags it as an
@@ -129,18 +150,19 @@ A local-first journaling companion. See [words-app-brief.md](./words-app-brief.m
   Vulkan usually works out of the box on a recent GPU driver). Run `npx --no node-llama-cpp inspect gpu` to
   see which backend it'll actually use and how much VRAM it sees.
 
-  Create a `models/` folder at the project root and put two `.gguf` files in it:
+  **The app downloads selected files itself on first run.** To reuse files or work offline, create a
+  `models/` folder at the project root and put the GGUF files in it:
 
   | File | What to download |
   |---|---|
   | `models/reflection-model.gguf` | e.g. [Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf](https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/blob/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf) (~4.9GB, good quality/size balance for an RTX 5070) |
-  | `models/embedding-model.gguf` | e.g. [nomic-embed-text-v1.5.Q4_K_M.gguf](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF) |
+  | `models/Qwen3-Embedding-0.6B-Q8_0.gguf` | [Qwen3 Embedding 0.6B Q8_0](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF) (~639 MB) |
 
   Rename whatever you download to match those two filenames, or point at different filenames/locations via
-  env vars instead of renaming:
+  the Settings → Local models folder picker, or via env vars instead of renaming:
 
   ```
-  WORDS_MODELS_DIR=C:\path\to\your\models
+  WORDS_MODELS_DIR=C:\path\to\your\models   # overrides the folder picked in Settings
   WORDS_REFLECTION_MODEL_FILE=some-other-model.gguf
   WORDS_EMBEDDING_MODEL_FILE=some-other-embedder.gguf
   WORDS_GPU_LAYERS=0                 # force CPU-only; omit to auto-fit to VRAM
@@ -173,7 +195,8 @@ If either says "NOT found," double-check the filename and folder against the tab
 
 If a reflection ever doesn't seem to be arriving, `node scripts/verify-models.mjs` exercises the model
 loading + generation pipeline standalone (no Electron, no GUI) and prints what happened — useful for
-telling apart a model problem from an app problem.
+telling apart a model problem from an app problem. It cannot read the app settings, so pass
+`WORDS_MODELS_DIR` if your model files live in a folder picked in Settings.
 
 ## Building a standalone Windows install
 
@@ -181,11 +204,14 @@ telling apart a model problem from an app problem.
 npm run dist:win
 ```
 
-Produces an installer under `dist/` (`Words Setup <version>.exe`, an NSIS one-click installer). `build.files`
-in `package.json` is scoped to `out/**/*` + `resources/**/*` specifically — without that, electron-builder
-packages the whole project directory by default, which breaks outright the moment a real GGUF file exists
-under `models/` (asar has a 4.2GB per-file limit). Model files are never bundled either way; the installed
-app downloads them itself on first run (or you place your own, same as running from source).
+Produces an installer under `dist/` (`Words Setup <version>.exe`, NSIS). It's an **assisted** installer
+(`build.nsis` in `package.json`, `oneClick: false`) — the user gets a wizard with a "choose install
+location" page (`allowToChangeInstallationDirectory: true`), a per-user install by default that can
+elevate to a system location if they pick one (`perMachine: false` + `allowElevation: true`), and
+desktop / Start-menu shortcuts. `build.files` is scoped to `out/**/*` + `resources/**/*` specifically —
+without that, electron-builder packages the whole project directory by default, which breaks outright the
+moment a real GGUF file exists under `models/` (asar has a 4.2GB per-file limit). Model files are never
+bundled either way; on first run the app uses files already present or downloads selected missing models.
 
 Built installers are also published to [GitHub Releases](https://github.com/pwnsbd/Words/releases) on this
 repo.
@@ -193,5 +219,22 @@ repo.
 ## Where your data lives
 
 Entries are stored as one JSON file per entry under Electron's per-user app data folder, e.g.
-`%APPDATA%\words\entries\`. Settings (theme, resurfacing sensitivity) live alongside them in
-`%APPDATA%\words\settings.json`. Nothing leaves your machine.
+`%APPDATA%\words\entries\`. Settings (theme, resurfacing sensitivity, the models folder you picked, model choices) live
+alongside them in `%APPDATA%\words\settings.json`. Nothing leaves your machine.
+
+## Memory checks
+
+- `npm run test:memory` — deterministic retrieval and migration regression checks.
+- `npm run test:memory:model` — adds real inference using the installed Qwen GGUF (CPU).
+- `npm run typecheck` and `npm run build` — application checks.
+- After building, `electron scripts/smoke-memory.mjs` — isolated hidden Electron save/match/source-link test; fixtures go under `.memory-smoke-*`, never your journal.
+
+## Twenty sample entries
+
+Run `npm run seed:demo` from the project root with both model files present. This explicitly adds 20 backdated entries to the normal Words journal, generates real Llama reflections and Qwen passage embeddings, and writes a sample-only matching report to `docs/demo-results.json`. Sample entries are labeled **sample** in the journal and reading view. Re-running resumes safely without duplicating samples or overwriting unrelated entries. Samples can be deleted through the journal like other entries; they contribute to theme/recap results while present.
+
+The writing is in `sample-entries.json`: four versions each of a journal-memory idea, perfectionism, array deduplication, and protecting a quiet morning hour, plus four unrelated everyday entries. Open a recent sample to follow its earlier matches, or save a new paraphrase of one of those ideas.
+
+Patterns still starts with semantically related passages. A shared reasoning approach across very different subjects may not be retrieved by the embedding stage; recognition is evidence-based and not exhaustive.
+
+`npm run test:philosophy` checks the actual local Llama classifier on a recurring philosophical tension, a shared reasoning approach across different subjects, and a mood-only negative case. It uses synthetic excerpts and an isolated temporary folder, not journal entries.

@@ -40,8 +40,8 @@ const DEFAULT_MODELS: DefaultModel[] = [
   },
   {
     key: 'embedding',
-    url: 'https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/main/nomic-embed-text-v1.5.Q4_K_M.gguf',
-    approxBytes: 84_000_000
+    url: 'https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF/resolve/main/Qwen3-Embedding-0.6B-Q8_0.gguf',
+    approxBytes: 639_150_592
   }
 ]
 
@@ -121,6 +121,9 @@ export async function downloadMissingModels(
   onProgress: (p: DownloadProgress) => void
 ): Promise<void> {
   for (const model of DEFAULT_MODELS) {
+    // Custom filenames are supplied by the developer, never filled with a default model.
+    if (model.key === 'reflection' && process.env.WORDS_REFLECTION_MODEL_FILE) continue
+    if (model.key === 'embedding' && process.env.WORDS_EMBEDDING_MODEL_FILE) continue
     const filename = model.key === 'reflection' ? reflectionFilename : embeddingFilename
     const destPath = join(modelsDir, filename)
     if (existsSync(destPath)) continue

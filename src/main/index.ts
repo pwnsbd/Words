@@ -2,7 +2,8 @@ import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import type { OpenDialogOptions } from 'electron'
 import { dirname, join, basename } from 'path'
 import { fileURLToPath } from 'url'
-import { readFile, stat } from 'fs/promises'
+import { existsSync } from 'fs'
+import { readFile, stat, mkdir, rename, copyFile, rm } from 'fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import {
   saveEntry,
@@ -11,12 +12,25 @@ import {
   deleteEntry,
   listEntries,
   getEntry,
-  findResurfacedEntry,
+  loadAllEntries,
   getRecentReflections,
+  getReflectionsForPeriod,
   THEME_MIN_ENTRIES,
   RECAP_MIN_ENTRIES
 } from './entries'
-import { reflect, embed, surfaceTheme, writeRecap, describeModelStatus, modelPaths } from './llamacpp'
+import {
+  reflect,
+  surfaceTheme,
+  writeRecap,
+  writeLetterForTimeframe,
+  describeModelStatus,
+  modelPaths,
+  resetModelContexts
+} from './llamacpp'
+import { saveLetter, listLetters, getLetter, deleteLetter } from './letters'
+import type { LetterTimeframe } from '../shared/types'
+import { listPatterns, dismissPattern, refreshPatterns, invalidatePatternsForEntry } from './patterns'
+import { modelJob, findMemories, rebuildMemory } from './memory'
 import { downloadMissingModels } from './modelDownload'
 import { getSettings, updateSettings } from './settings'
 import { stripStruckMarkup } from '../shared/textMarkup'
@@ -38,6 +52,35 @@ function dateFromFilename(filename: string): string | null {
   const [, y, m, d] = match
   const date = new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0)
   return isNaN(date.getTime()) ? null : date.toISOString()
+}
+
+function computePeriod(date: Date, timeframe: LetterTimeframe): { label: string; start: string; end: string } {
+  if (timeframe === 'week') {
+    const d = date.getDay()
+    const sunday = new Date(date)
+    sunday.setDate(date.getDate() - d)
+    sunday.setHours(0, 0, 0, 0)
+    const saturday = new Date(sunday)
+    saturday.setDate(sunday.getDate() + 6)
+    saturday.setHours(23, 59, 59, 999)
+    return {
+      label: `Week of ${sunday.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`,
+      start: sunday.toISOString(),
+      end: saturday.toISOString()
+    }
+  }
+  if (timeframe === 'month') {
+    const start = new Date(date.getFullYear(), date.getMonth(), 1)
+    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999)
+    return {
+      label: date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+      start: start.toISOString(),
+      end: end.toISOString()
+    }
+  }
+  const start = new Date(date.getFullYear(), 0, 1)
+  const end = new Date(date.getFullYear(), 11, 31, 23, 59, 59, 999)
+  return { label: String(date.getFullYear()), start: start.toISOString(), end: end.toISOString() }
 }
 
 function createWindow(): void {
@@ -96,6 +139,32 @@ function runModelDownload(): void {
   })
 }
 
+// Moves whichever model files exist from one folder to another -- used when
+// the user re-points the models folder in Settings, so they don't have to
+// shift ~5GB by hand or re-download it. rename() first (instant on the same
+// volume); copy-then-delete across volumes. Best effort: a file already at
+// the destination, or one that fails to move, is just left -- the app fills
+// any gap on the next runModelDownload().
+async function relocateModelFiles(fromDir: string, toDir: string, filenames: string[]): Promise<void> {
+  if (!fromDir || !toDir || fromDir === toDir) return
+  await mkdir(toDir, { recursive: true })
+  for (const name of filenames) {
+    const src = join(fromDir, name)
+    const dest = join(toDir, name)
+    if (!existsSync(src) || existsSync(dest)) continue
+    try {
+      await rename(src, dest)
+    } catch {
+      try {
+        await copyFile(src, dest)
+        await rm(src, { force: true })
+      } catch (err) {
+        console.error('[words] could not move model file:', name, err)
+      }
+    }
+  }
+}
+
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.words.journal')
 
@@ -108,11 +177,14 @@ app.whenReady().then(() => {
     `[words] embedding model: ${modelStatus.embeddingModelFound ? 'found' : 'NOT found — entries will save without an embedding'}`
   )
 
-  // No automatic download kicked off here -- a ~5GB download deserves a
-  // yes/no first. The renderer shows a one-time consent banner on the
-  // write page when a model's missing and settings.modelDownloadAsked is
-  // still false; "download" there (or the manual button in Settings)
-  // calls the same models:download handler below either way.
+  // First run (and any later run where the files still aren't in place):
+  // fetch the models automatically, in the background. No prompt -- the
+  // writing surface shows a quiet "setting up local models" line while it
+  // runs and is never blocked. downloadMissingModels() skips whichever
+  // file is already present, so this is a no-op once both are down.
+  if ((modelStatus.reflectionEnabled && !modelStatus.reflectionModelFound) || !modelStatus.embeddingModelFound) {
+    runModelDownload()
+  }
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
@@ -126,33 +198,37 @@ app.whenReady().then(() => {
     // local model responds, we quietly push the reflection to the window,
     // and — only if a genuinely similar old entry exists — a resurfaced
     // memory a beat after that.
-    void (async () => {
-      // Struck (crossed-out) text is a marked mistake, not part of what the
-      // writer meant to say -- the model should read the entry as if it
-      // wasn't there, same as previews elsewhere.
-      const cleanText = stripStruckMarkup(entry.text)
-      const [reflected, embedding] = await Promise.all([reflect(cleanText), embed(cleanText)])
-      if (reflected || embedding) {
-        await updateEntry(entry.id, {
-          ...(reflected ? { reflection: reflected.reflection, mood: reflected.mood } : {}),
-          ...(embedding ? { embedding } : {})
-        })
-      }
+    // Memory retrieval does not wait for reflection generation.
+    void modelJob(async () => {
+      const matches = await findMemories(entry.id)
       if (!event.sender.isDestroyed()) {
-        if (reflected) {
+        event.sender.send('entries:resurfaced', { id: entry.id, matches })
+      }
+    }).catch((err) => console.error('[words] memory lookup failed:', err))
+    void modelJob(async () => {
+      const reflected = await reflect(stripStruckMarkup(entry.text))
+      if (reflected) {
+        await updateEntry(entry.id, reflected)
+        if (!event.sender.isDestroyed()) {
           event.sender.send('entries:reflection', { id: entry.id, reflection: reflected.reflection })
         }
-        if (embedding) {
-          const resurfaced = await findResurfacedEntry(embedding, entry.id)
-          if (resurfaced && !event.sender.isDestroyed()) {
-            event.sender.send('entries:resurfaced', resurfaced)
-          }
-        }
       }
-    })()
+    }).catch((err) => console.error('[words] reflection job failed:', err))
+    refreshPatterns()
+
 
     return entry
   })
+
+  ipcMain.handle('entries:memories', (_event, id: string) => modelJob(() => findMemories(id)))
+  ipcMain.handle('memory:rebuild', () => modelJob(async () => {
+    const result = await rebuildMemory(true)
+    refreshPatterns()
+    return result
+  }))
+  ipcMain.handle('patterns:list', () => listPatterns())
+  ipcMain.handle('patterns:refresh', () => refreshPatterns())
+  ipcMain.handle('patterns:dismiss', (_event, id: string) => dismissPattern(id))
 
   ipcMain.handle('entries:list', async () => listEntries())
 
@@ -162,6 +238,8 @@ app.whenReady().then(() => {
   // the only way to change your mind about one.
   ipcMain.handle('entries:delete', async (_event, id: string) => {
     await deleteEntry(id)
+    await invalidatePatternsForEntry(id)
+    refreshPatterns()
   })
 
   ipcMain.handle('settings:get', () => getSettings())
@@ -178,6 +256,52 @@ app.whenReady().then(() => {
     runModelDownload()
   })
 
+  // Lets the user move the two GGUF files to a folder of their choosing --
+  // e.g. off the system drive. The existing files are moved there (not
+  // re-downloaded); settings.modelsDir is repointed and the warm contexts
+  // dropped so the next reflection loads from the new spot without a
+  // restart. Anything still missing afterward is downloaded. Returns the
+  // refreshed model status; returns null if the picker was cancelled.
+  ipcMain.handle('models:choose-dir', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const dialogOptions: OpenDialogOptions = {
+      title: 'Choose a folder for the local model files',
+      properties: ['openDirectory', 'createDirectory'],
+      buttonLabel: 'Use this folder',
+      defaultPath: app.getPath('home')
+    }
+    const result = win
+      ? await dialog.showOpenDialog(win, dialogOptions)
+      : await dialog.showOpenDialog(dialogOptions)
+    if (result.canceled || result.filePaths.length === 0) return null
+
+    if (downloadInFlight) return null
+    return modelJob(async () => {
+      const target = result.filePaths[0]
+      const current = modelPaths()
+      await relocateModelFiles(current.dir, target, [current.reflectionFile, current.embeddingFile])
+      updateSettings({ modelsDir: target })
+      await resetModelContexts()
+      const status = describeModelStatus()
+      if ((status.reflectionEnabled && !status.reflectionModelFound) || !status.embeddingModelFound) runModelDownload()
+      return status
+    })
+  })
+
+  // Clears a chosen folder and moves the files back to the built-in default
+  // location. Same move + context-reset + status contract as choose-dir.
+  ipcMain.handle('models:reset-dir', () => modelJob(async () => {
+    if (downloadInFlight) return describeModelStatus()
+    const current = modelPaths()
+    updateSettings({ modelsDir: null })
+    const target = modelPaths().dir
+    await relocateModelFiles(current.dir, target, [current.reflectionFile, current.embeddingFile])
+    await resetModelContexts()
+    const status = describeModelStatus()
+    if ((status.reflectionEnabled && !status.reflectionModelFound) || !status.embeddingModelFound) runModelDownload()
+    return status
+  }))
+
   // Only attempted when the journal view is actually opened (never on the
   // writing surface, never on a timer) and only if there's enough recent
   // material for a "recurring" theme to mean anything. Returns null (no
@@ -186,7 +310,7 @@ app.whenReady().then(() => {
   ipcMain.handle('entries:theme', async () => {
     const recent = await getRecentReflections()
     if (recent.length < THEME_MIN_ENTRIES) return null
-    return surfaceTheme(recent)
+    return modelJob(() => surfaceTheme(recent))
   })
 
   // Same "only if there's genuinely enough to say something" gate as theme
@@ -195,7 +319,49 @@ app.whenReady().then(() => {
   ipcMain.handle('entries:recap', async () => {
     const recent = await getRecentReflections()
     if (recent.length < RECAP_MIN_ENTRIES) return null
-    return writeRecap(recent)
+    return modelJob(() => writeRecap(recent))
+  })
+
+  ipcMain.handle('letters:generate', async (
+    _event,
+    timeframe: LetterTimeframe,
+    periodLabel: string,
+    periodStart: string,
+    periodEnd: string
+  ) => {
+    const reflections = await getReflectionsForPeriod(periodStart, periodEnd)
+    if (reflections.length < RECAP_MIN_ENTRIES) return null
+    const content = await modelJob(() => writeLetterForTimeframe(reflections, timeframe))
+    if (!content) return null
+    return saveLetter(timeframe, periodLabel, periodStart, periodEnd, content)
+  })
+
+  ipcMain.handle('letters:list', (_event, timeframe?: LetterTimeframe) => listLetters(timeframe))
+  ipcMain.handle('letters:get', (_event, id: string) => getLetter(id))
+  ipcMain.handle('letters:delete', (_event, id: string) => deleteLetter(id))
+
+  ipcMain.handle('letters:next-period', async (_event, timeframe: LetterTimeframe) => {
+    const entries = await loadAllEntries()
+    const withReflection = entries.filter((e) => e.reflection)
+    if (withReflection.length === 0) return null
+
+    const periods = new Map<string, { label: string; start: string; end: string; count: number }>()
+    for (const entry of withReflection) {
+      const period = computePeriod(new Date(entry.createdAt), timeframe)
+      const prev = periods.get(period.start)
+      if (prev) prev.count++
+      else periods.set(period.start, { ...period, count: 1 })
+    }
+
+    const existing = await listLetters(timeframe)
+    const coveredStarts = new Set(existing.map((l) => l.periodStart))
+
+    const available = [...periods.values()]
+      .filter((p) => !coveredStarts.has(p.start) && p.count >= RECAP_MIN_ENTRIES)
+      .sort((a, b) => a.start.localeCompare(b.start))
+
+    if (available.length === 0) return null
+    return { label: available[0].label, start: available[0].start, end: available[0].end }
   })
 
   // Plain text/markdown files only for v1 — one file per entry. Each is
@@ -223,8 +389,7 @@ app.whenReady().then(() => {
         const fileStat = await stat(filePath)
         const createdAt = dateFromFilename(basename(filePath)) ?? fileStat.mtime.toISOString()
         const entry = await importEntry(text, createdAt)
-        const embedding = await embed(entry.text)
-        if (embedding) await updateEntry(entry.id, { embedding })
+        await modelJob(() => findMemories(entry.id))
         imported++
       } catch (err) {
         // Note: keep "import" out of the tail end of this message — a
@@ -235,6 +400,7 @@ app.whenReady().then(() => {
         console.error('[words] could not import file:', filePath, err)
       }
     }
+    if (imported) refreshPatterns()
     return { imported }
   })
 

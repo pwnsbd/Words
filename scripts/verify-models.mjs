@@ -9,9 +9,12 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const modelsDir = join(__dirname, '..', 'models')
+// Mirrors llamacpp.ts: WORDS_MODELS_DIR wins, else models/ at the project
+// root. (This standalone script can't read the app's settings.json, so a
+// folder picked in-app has to be passed here via the env var.)
+const modelsDir = process.env.WORDS_MODELS_DIR || join(__dirname, '..', 'models')
 const reflectionModelPath = join(modelsDir, 'reflection-model.gguf')
-const embeddingModelPath = join(modelsDir, 'embedding-model.gguf')
+const embeddingModelPath = join(modelsDir, 'Qwen3-Embedding-0.6B-Q8_0.gguf')
 
 const REFLECTION_SYSTEM_PROMPT = `You are a quiet, gentle presence reading someone's private journal entry at the
 end of their day. Respond with exactly one short sentence acknowledging the emotional tone of what they wrote —
@@ -41,7 +44,7 @@ async function embed(llama, text) {
     const model = await llama.loadModel({ modelPath: embeddingModelPath })
     embeddingContext = await model.createEmbeddingContext()
   }
-  const embedding = await embeddingContext.getEmbeddingFor('search_document: ' + text)
+  const embedding = await embeddingContext.getEmbeddingFor(text)
   return Array.from(embedding.vector)
 }
 

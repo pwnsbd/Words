@@ -6,17 +6,32 @@ export interface JournalEntry {
   id: string
   createdAt: string // ISO timestamp
   text: string
+  isSample?: boolean
   reflection?: string
   // -2 (heavy/hard day) to 2 (light/good day). Internal only — never shown
   // to the user as a number/label, just used to draw a soft trend line.
   mood?: number
   embedding?: number[]
+  memory?: MemoryEmbedding
+}
+
+export interface MemoryEmbedding {
+  modelId: string
+  passages: { text: string; start: number; end: number; vector: number[] }[]
+}
+
+export interface MemoryMatch extends EntrySummary {
+  start: number
+  end: number
+  score: number
+  currentPassage: string
 }
 
 export interface EntrySummary {
   id: string
   createdAt: string
   preview: string
+  isSample?: boolean
   mood?: number
 }
 
@@ -38,18 +53,23 @@ export type ResurfaceSensitivity = 'rare' | 'balanced' | 'often'
 export type WritingMode = 'pencil' | 'quill' | 'ink'
 
 export interface Settings {
+  reflectionModel: 'existing'
+  embeddingModel: 'qwen'
   theme: Theme
   resurfaceSensitivity: ResurfaceSensitivity
   writingMode: WritingMode
   quillDeleteLimit: number
-  // Whether the one-time "download local models?" consent banner has
-  // already been shown (accepted or declined either way) -- once true, it
-  // never shows again; Settings → Local models still offers a manual
-  // download/retry regardless.
-  modelDownloadAsked: boolean
+  // Folder the app looks in for the two GGUF model files. null = the
+  // built-in default (dev: models/ at the project root; packaged: a
+  // models/ folder inside the install directory, so an uninstall removes
+  // them too). Set to an absolute path when the user picks a different
+  // folder from Settings → Local models — the app moves the existing files
+  // there. The WORDS_MODELS_DIR env var, if set, overrides this.
+  modelsDir: string | null
 }
 
 export interface ModelStatus {
+  reflectionEnabled: boolean
   modelsDir: string
   reflectionModelFound: boolean
   embeddingModelFound: boolean
@@ -64,4 +84,44 @@ export interface DownloadProgress {
   totalBytes: number
   done: boolean
   error?: string
+}
+
+export type LetterTimeframe = 'week' | 'month' | 'year'
+
+export interface Letter {
+  id: string
+  timeframe: LetterTimeframe
+  periodLabel: string   // "Week of Sep 15, 2026", "September 2026", "2026"
+  periodStart: string   // ISO date
+  periodEnd: string     // ISO date
+  content: string
+  createdAt: string     // ISO date
+}
+
+export interface LetterSummary {
+  id: string
+  timeframe: LetterTimeframe
+  periodLabel: string
+  periodStart: string
+  createdAt: string
+}
+
+export interface IdeaEvidence {
+  entryId: string
+  createdAt: string
+  text: string
+  start: number
+  end: number
+  isSample?: boolean
+}
+export interface IdeaPattern {
+  id: string
+  title: string
+  description: string
+  evidence: IdeaEvidence[]
+}
+export interface PatternsSnapshot {
+  patterns: IdeaPattern[]
+  updating: boolean
+  message: string | null
 }
