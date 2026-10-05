@@ -1618,3 +1618,20 @@ button {
 section[aria-label='Letter'] .scroll,
 section[aria-label='Letter'] .read__toolbar,
 section[aria-label='Letter'] .read__actions { max-width: 880px; }
+
+/* One header line for the journal-style pages: back arrow, page title and
+   the top-right controls all centre on the same 40px band at 5vh. */
+.journal { padding-top: 5vh; }
+.journal > .corner--write,
+.journal__top-right {
+  top: 5vh;
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+.journal > .journal__title,
+.journal > .letters__header .journal__title {
+  line-height: 40px;
+  min-height: 40px;
+}
+.journal > .letters__header { align-items: center; min-height: 40px; }
