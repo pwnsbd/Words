@@ -19,8 +19,9 @@ export function spellReady(): boolean {
 
 export function loadSpellcheck(personalWords: string[]): Promise<void> {
   if (loading) return loading
-  loading = window.api
-    .getSpellDictionary()
+  // Promise.resolve().then so a missing/throwing API can never crash the caller.
+  loading = Promise.resolve()
+    .then(() => window.api.getSpellDictionary())
     .then((dict) => {
       if (!dict) return
       const s = NSpell(dict.aff, dict.dic)
