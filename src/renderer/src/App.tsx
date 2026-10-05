@@ -16,6 +16,7 @@ import type {
 } from '../../shared/types'
 import { parseRuns, serializeRuns } from '../../shared/textMarkup'
 import { DRAFT_KEY, readDraft } from './draft'
+import { DeleteControl } from './DeleteMark'
 import {
   loadSpellcheck,
   spellReady,
@@ -1258,6 +1259,14 @@ export default function App(): JSX.Element {
               <p className="journal__empty"> </p>
             ) : (
               <>
+                <div className="read__toolbar">
+                  <DeleteControl
+                    noun="entry"
+                    confirming={deleteConfirming}
+                    setConfirming={setDeleteConfirming}
+                    onDelete={() => void handleDelete()}
+                  />
+                </div>
                 <ScrollFrame mood={readEntry.mood}>
                   <div className="journal__date read__date">
                     {readEntry.mood !== undefined && (
@@ -1299,35 +1308,18 @@ export default function App(): JSX.Element {
                   {readEntry.reflection && <p className="reflection read__reflection">{readEntry.reflection}</p>}
                 </ScrollFrame>
 
-                <div className="read__actions">
-                  {deleteConfirming ? (
-                    <>
-                      <span className="hint">delete this entry?</span>
-                      <button type="button" className="journal__link" onClick={() => void handleDelete()}>
-                        yes, delete
-                      </button>
-                      <button type="button" className="journal__link" onClick={() => setDeleteConfirming(false)}>
-                        never mind
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {modelStatus?.reflectionEnabled && modelStatus.reflectionModelFound && (
-                        <button
-                          type="button"
-                          className="journal__link"
-                          disabled={listeningAgain}
-                          onClick={() => void handleListenAgain()}
-                        >
-                          {listeningAgain ? 'listening…' : 'listen again'}
-                        </button>
-                      )}
-                      <button type="button" className="journal__link" onClick={() => setDeleteConfirming(true)}>
-                        delete
-                      </button>
-                    </>
-                  )}
-                </div>
+                {modelStatus?.reflectionEnabled && modelStatus.reflectionModelFound && (
+                  <div className="read__actions">
+                    <button
+                      type="button"
+                      className="journal__link"
+                      disabled={listeningAgain}
+                      onClick={() => void handleListenAgain()}
+                    >
+                      {listeningAgain ? 'listening…' : 'listen again'}
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </section>
@@ -1501,6 +1493,31 @@ export default function App(): JSX.Element {
               <p className="journal__empty"> </p>
             ) : (
               <>
+                <div className="read__toolbar">
+                  {modelStatus?.reflectionEnabled && modelStatus.reflectionModelFound && (
+                    <button
+                      type="button"
+                      className={`letters__feather ${letterRewriting ? 'letters__feather--writing' : ''}`}
+                      onClick={() => void handleRewriteLetter()}
+                      disabled={letterRewriting}
+                      aria-label="write again"
+                      title="write again"
+                    >
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M20 4c-6 0-11 3-12.5 9.5L6 18l4.5-1.5C17 15 20 10 20 4z" />
+                        <path d="M6 18c2-4 5-7 9-9.5" />
+                        <path d="M4 21c1.5-.8 3-1 5-1" />
+                      </svg>
+                    </button>
+                  )}
+                  <DeleteControl
+                    noun="letter"
+                    confirming={letterDeleteConfirming}
+                    setConfirming={setLetterDeleteConfirming}
+                    onDelete={() => void handleDeleteLetter()}
+                  />
+                </div>
                 <ScrollFrame showSeal={false}>
                   <div className="journal__date read__date">
                     <span className={`letters__timeframe-dot letters__timeframe-dot--${readLetter.timeframe}`} aria-hidden="true" />
@@ -1516,42 +1533,6 @@ export default function App(): JSX.Element {
                     written {formatDate(readLetter.createdAt)}
                   </p>
                 </ScrollFrame>
-
-                {modelStatus?.reflectionEnabled && modelStatus.reflectionModelFound && (
-                  <button
-                    type="button"
-                    className={`corner letters__feather ${letterRewriting ? 'letters__feather--writing' : ''}`}
-                    onClick={() => void handleRewriteLetter()}
-                    disabled={letterRewriting}
-                    aria-label="write again"
-                    title="write again"
-                  >
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M20 4c-6 0-11 3-12.5 9.5L6 18l4.5-1.5C17 15 20 10 20 4z" />
-                      <path d="M6 18c2-4 5-7 9-9.5" />
-                      <path d="M4 21c1.5-.8 3-1 5-1" />
-                    </svg>
-                  </button>
-                )}
-
-                <div className="read__actions">
-                  {letterDeleteConfirming ? (
-                    <>
-                      <span className="hint">delete this letter?</span>
-                      <button type="button" className="journal__link" onClick={() => void handleDeleteLetter()}>
-                        yes, delete
-                      </button>
-                      <button type="button" className="journal__link" onClick={() => setLetterDeleteConfirming(false)}>
-                        never mind
-                      </button>
-                    </>
-                  ) : (
-                    <button type="button" className="journal__link" onClick={() => setLetterDeleteConfirming(true)}>
-                      delete
-                    </button>
-                  )}
-                </div>
               </>
             )}
           </section>

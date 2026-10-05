@@ -557,6 +557,19 @@ button {
   height: fit-content;
 }
 
+/* Actions above the scroll, in the same 620px column so their right edge
+   lines up with the scroll's right edge. */
+.read__toolbar {
+  width: 100%;
+  max-width: 620px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6em;
+  margin-bottom: 0.6em;
+  min-height: 36px;
+}
+
 .read__actions {
   width: 100%;
   max-width: 620px;
@@ -871,7 +884,18 @@ button {
 /* Feather: the "write again" mark. Ink via currentColor so it follows the
    cream and charcoal themes. While rewriting it sways like a quill. */
 .letters__feather {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
   padding: 0.3em;
+  cursor: pointer;
+  opacity: 0.7;
+  line-height: 0;
+  transition: opacity 200ms ease;
+}
+
+.letters__feather:hover {
+  opacity: 1;
 }
 
 .letters__feather svg {
@@ -901,6 +925,93 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .letters__feather--writing svg { animation: none; }
   .letters__feather--writing { opacity: 0.45; }
+}
+
+/* Ink wastebasket (DeleteMark.tsx). Lid lifts on hover/focus, stays open and
+   wobbles while the confirm line is showing, closes on confirm. */
+.delete-mark {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 0.3em;
+  cursor: pointer;
+  opacity: 0.7;
+  line-height: 0;
+  transition: opacity 200ms ease;
+}
+
+.delete-mark:hover,
+.delete-mark:focus-visible,
+.delete-mark--open {
+  opacity: 1;
+}
+
+.delete-mark svg {
+  display: block;
+  overflow: visible;
+}
+
+.delete-mark__lid {
+  transform-box: fill-box;
+  transform-origin: 15% 100%;
+  transition: transform 200ms ease;
+}
+
+.delete-mark:hover .delete-mark__lid,
+.delete-mark:focus-visible .delete-mark__lid,
+.delete-mark--open .delete-mark__lid {
+  transform: translate(-1px, -2px) rotate(-14deg);
+}
+
+.delete-mark--open svg {
+  animation: deleteWobble 600ms ease-in-out 1;
+}
+
+.delete-mark--dropping {
+  cursor: default;
+}
+
+.delete-mark--dropping .delete-mark__lid {
+  animation: deleteDropIn 300ms ease-in forwards;
+}
+
+.delete-mark--dropping svg {
+  animation: deleteSink 300ms ease-in forwards;
+}
+
+.delete-confirm {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.7em;
+  margin-right: 0.4em;
+}
+
+.delete-confirm .journal__link {
+  margin: 0;
+}
+
+@keyframes deleteWobble {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-5deg); }
+  50% { transform: rotate(4deg); }
+  75% { transform: rotate(-2deg); }
+}
+
+@keyframes deleteDropIn {
+  from { transform: translate(-1px, -2px) rotate(-14deg); }
+  to { transform: translate(0, 0) rotate(0); }
+}
+
+@keyframes deleteSink {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(2px); opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delete-mark__lid { transition: none; }
+  .delete-mark--open svg,
+  .delete-mark--dropping .delete-mark__lid,
+  .delete-mark--dropping svg { animation: none; }
 }
 
 /* ---------- Settings ---------- */
