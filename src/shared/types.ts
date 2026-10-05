@@ -35,6 +35,18 @@ export interface EntrySummary {
   mood?: number
 }
 
+export interface EntryEcho {
+  passage: string
+  count: number // how many other entries this passage returns in
+}
+
+// Grid-card text: the entry's opening with struck markup kept, plus its reflection.
+export interface EntryCardText {
+  id: string
+  excerpt: string
+  reflection?: string
+}
+
 export type Theme = 'light' | 'dark'
 
 // Friendly labels stand in for the raw cosine-similarity threshold — see
@@ -59,6 +71,7 @@ export interface Settings {
   resurfaceSensitivity: ResurfaceSensitivity
   writingMode: WritingMode
   quillDeleteLimit: number
+  journalView: 'list' | 'grid'
   // Folder the app looks in for the two GGUF model files. null = the
   // built-in default (dev: models/ at the project root; packaged: a
   // models/ folder inside the install directory, so an uninstall removes

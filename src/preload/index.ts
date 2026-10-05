@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { JournalEntry, EntrySummary, MemoryMatch, PatternsSnapshot, Settings, ModelStatus, DownloadProgress, Letter, LetterSummary, LetterTimeframe, LetterFillProgress, LetterFillResult } from '../shared/types'
+import type { JournalEntry, EntrySummary, EntryEcho, EntryCardText, MemoryMatch, PatternsSnapshot, Settings, ModelStatus, DownloadProgress, Letter, LetterSummary, LetterTimeframe, LetterFillProgress, LetterFillResult } from '../shared/types'
 
 const api = {
   listPatterns: (): Promise<PatternsSnapshot> => ipcRenderer.invoke('patterns:list'),
@@ -8,6 +8,13 @@ const api = {
   dismissPattern: (id: string): Promise<PatternsSnapshot> => ipcRenderer.invoke('patterns:dismiss', id),
   saveEntry: (text: string): Promise<JournalEntry> => ipcRenderer.invoke('entries:save', text),
   listEntries: (): Promise<EntrySummary[]> => ipcRenderer.invoke('entries:list'),
+  getEntryEchoes: (): Promise<Record<string, EntryEcho>> => ipcRenderer.invoke('entries:echoes'),
+  getEntryCardTexts: (): Promise<EntryCardText[]> => ipcRenderer.invoke('entries:card-texts'),
+  onEchoesReady: (callback: () => void): (() => void) => {
+    const listener = (): void => callback()
+    ipcRenderer.on('entries:echoes-ready', listener)
+    return () => ipcRenderer.removeListener('entries:echoes-ready', listener)
+  },
   getEntry: (id: string): Promise<JournalEntry | null> => ipcRenderer.invoke('entries:get', id),
   deleteEntry: (id: string): Promise<void> => ipcRenderer.invoke('entries:delete', id),
   regenerateReflection: (id: string): Promise<JournalEntry | null> =>

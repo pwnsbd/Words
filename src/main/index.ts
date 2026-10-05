@@ -34,7 +34,7 @@ import {
 } from './letters'
 import type { LetterTimeframe } from '../shared/types'
 import { listPatterns, dismissPattern, refreshPatterns, invalidatePatternsForEntry } from './patterns'
-import { modelJob, findMemories, rebuildMemory } from './memory'
+import { modelJob, findMemories, rebuildMemory, getEchoes, invalidateEchoes, onEchoesReady, listCardTexts } from './memory'
 import { downloadMissingModels } from './modelDownload'
 import { getSettings, updateSettings } from './settings'
 import { stripStruckMarkup } from '../shared/textMarkup'
@@ -186,6 +186,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('entries:save', async (event, text: string) => {
     const entry = await saveEntry(text)
+    invalidateEchoes()
 
     // Reflect + embed in the background. The writer never waits on this —
     // save returns immediately with just the saved entry. When (if) the
@@ -195,6 +196,7 @@ app.whenReady().then(() => {
     // Memory retrieval does not wait for reflection generation.
     void modelJob(async () => {
       const matches = await findMemories(entry.id)
+      invalidateEchoes() // vectors for this entry (and any legacy ones) were just stored
       if (!event.sender.isDestroyed()) {
         event.sender.send('entries:resurfaced', { id: entry.id, matches })
       }
@@ -247,6 +249,7 @@ app.whenReady().then(() => {
   ipcMain.handle('entries:memories', (_event, id: string) => modelJob(() => findMemories(id)))
   ipcMain.handle('memory:rebuild', () => modelJob(async () => {
     const result = await rebuildMemory(true)
+    invalidateEchoes()
     refreshPatterns()
     return result
   }))
@@ -256,12 +259,23 @@ app.whenReady().then(() => {
 
   ipcMain.handle('entries:list', async () => listEntries())
 
+  // Journal grid: echo passages come from stored vectors only (no model calls);
+  // anything not ready within the budget arrives via entries:echoes-ready.
+  onEchoesReady(() => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send('entries:echoes-ready')
+    }
+  })
+  ipcMain.handle('entries:echoes', () => getEchoes())
+  ipcMain.handle('entries:card-texts', () => listCardTexts())
+
   ipcMain.handle('entries:get', async (_event, id: string) => getEntry(id))
 
   // No entries:edit handler — entries are permanent once saved. Delete is
   // the only way to change your mind about one.
   ipcMain.handle('entries:delete', async (_event, id: string) => {
     await deleteEntry(id)
+    invalidateEchoes()
     await invalidatePatternsForEntry(id)
     refreshPatterns()
   })
@@ -489,7 +503,7 @@ app.whenReady().then(() => {
         imported++
         // Saving is the import's success criterion. Model failures must not
         // hide a successfully imported file from the returned count.
-        await modelJob(() => findMemories(entry.id)).catch((err) => console.error('[words] imported entry memory failed:', err))
+        await modelJob(() => findMemories(entry.id)).then(() => invalidateEchoes()).catch((err) => console.error('[words] imported entry memory failed:', err))
       } catch (err) {
         failed++
         // Note: keep "import" out of the tail end of this message — a
@@ -500,7 +514,7 @@ app.whenReady().then(() => {
         console.error('[words] could not import file:', filePath, err)
       }
     }
-    if (imported) refreshPatterns()
+    if (imported) { invalidateEchoes(); refreshPatterns() }
     return { imported, failed }
   })
 

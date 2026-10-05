@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS: Settings = {
   resurfaceSensitivity: 'balanced',
   writingMode: 'pencil',
   quillDeleteLimit: 5,
+  journalView: 'list',
   modelsDir: null,
   spellcheckWords: []
 }
@@ -48,6 +49,10 @@ function validatedPatch(value: unknown): Partial<Settings> {
   if (patch.quillDeleteLimit !== undefined) {
     if (!Number.isSafeInteger(patch.quillDeleteLimit) || patch.quillDeleteLimit < 0) throw new Error('Invalid deletion limit')
     result.quillDeleteLimit = patch.quillDeleteLimit
+  }
+  if (patch.journalView !== undefined) {
+    if (!['list', 'grid'].includes(patch.journalView)) throw new Error('Invalid journal view')
+    result.journalView = patch.journalView
   }
   if (patch.modelsDir !== undefined) {
     if (patch.modelsDir !== null && (typeof patch.modelsDir !== 'string' || !isAbsolute(patch.modelsDir))) throw new Error('Invalid models folder')

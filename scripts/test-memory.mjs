@@ -67,11 +67,11 @@ const stored = new Map([
   ['old', { id: 'old', createdAt: '2025-01-01', text: 'An earlier idea', embedding: [9, 9] }],
   ['new', { id: 'new', createdAt: '2026-01-01', text: 'An earlier idea in other words' }]
 ])
-let activeId = 'model-a', calls = 0, available = true
+let activeId = 'model-a', calls = 0, available = true, loads = 0
 const dependencies = {
   './llamacpp': { embeddingModelId: () => available ? activeId : null, embed: async () => { calls++; return [1, 0] } },
   './entries': {
-    loadAllEntries: async () => [...stored.values()].map(e => ({ ...e })),
+    loadAllEntries: async () => { loads++; return [...stored.values()].map(e => ({ ...e })) },
     getEntry: async id => stored.get(id) ?? null,
     updateEntry: async (id, patch) => { if (stored.has(id)) stored.set(id, { ...stored.get(id), ...patch }) }
   },
@@ -83,7 +83,7 @@ const dependencies = {
 const orchestrator = { exports: {} }
 runInNewContext(ts.transpileModule(readFileSync(new URL('../src/main/memory.ts', import.meta.url), 'utf8'), {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS }
-}).outputText, { exports: orchestrator.exports, require: id => {
+}).outputText, { exports: orchestrator.exports, setTimeout, clearTimeout, console, require: id => {
   assert(id in dependencies, `unexpected dependency ${id}`)
   return dependencies[id]
 } })
@@ -102,6 +102,58 @@ assert.equal((await memoryService.findMemories('new')).length, 0)
 await assert.rejects(memoryService.modelJob(async () => { throw new Error('test failure') }))
 assert.equal(await memoryService.modelJob(async () => 42), 42, 'failed jobs must not poison the queue')
 console.log('Memory service tests passed (migration, reuse, model swaps, deletion, missing models and queue recovery).')
+
+// Echoes: stored vectors only, active model only, threshold respected, cached until invalidated.
+{
+  const unit = (angle) => [Math.cos(angle), Math.sin(angle)]
+  const entry = (id, day, modelId, passages) => ({ id, createdAt: `2026-02-0${day}`, text: id,
+    memory: { modelId, passages: passages.map(([text, vector]) => ({ text, start: 0, end: text.length, vector })) } })
+  stored.clear()
+  // 'a' has a lonely passage and one that returns in b and c; the busier one must win.
+  stored.set('a', entry('a', 1, 'model-b', [['lonely line', [0, 1]], ['the recurring thought', unit(0)]]))
+  stored.set('b', entry('b', 2, 'model-b', [['recurring, reworded', unit(0.1)]]))
+  stored.set('c', entry('c', 3, 'model-b', [['the thought again', unit(-0.1)]]))
+  stored.set('d', entry('d', 4, 'model-b', [['something else entirely', [0, 1]]]))
+  // Same vectors under another model must not count.
+  stored.set('x', entry('x', 5, 'model-a', [['recurring from elsewhere', unit(0)]]))
+  activeId = 'model-b'; available = true
+  memoryService.invalidateEchoes()
+  let echoes = await memoryService.getEchoes()
+  assert.deepEqual({ ...echoes.a }, { passage: 'the recurring thought', count: 2 })
+  assert(!('x' in echoes), 'other-model entries have no echoes')
+  assert.equal(echoes.d.count, 1, 'a passage can echo a single other entry (d and a share [0,1])')
+  assert.equal(echoes.d.passage, 'something else entirely')
+  // Cached: nothing is reloaded until invalidated.
+  const before = loads
+  await memoryService.getEchoes()
+  assert.equal(loads, before, 'second call is served from cache')
+  // Deleting an entry invalidates: its echoes vanish and others recount.
+  stored.delete('b')
+  memoryService.invalidateEchoes()
+  echoes = await memoryService.getEchoes()
+  assert.equal(loads, before + 1)
+  assert(!('b' in echoes))
+  assert.equal(echoes.a.count, 1)
+  // Below the threshold: nothing.
+  const far = await memoryService.computeEchoes([...stored.values()], 'model-b', 1.01)
+  assert.equal(Object.keys(far).length, 0)
+  // No model: no echoes.
+  available = false
+  memoryService.invalidateEchoes()
+  assert.equal(Object.keys(await memoryService.getEchoes()).length, 0)
+  available = true
+  // Speed: 500 entries x 3 passages x 1024 dims, one slice at a time.
+  const big = []
+  for (let i = 0; i < 500; i++) {
+    big.push({ id: 'e' + i, createdAt: new Date(2025, 0, 1 + i).toISOString(), text: '',
+      memory: { modelId: 'model-b', passages: [0, 1, 2].map(k => ({ text: `p${i}.${k}`, start: 0, end: 1,
+        vector: Array.from({ length: 1024 }, () => Math.random() - .5) })) } })
+  }
+  const t0 = Date.now()
+  await memoryService.computeEchoes(big, 'model-b', .68)
+  console.log(`  echo timing: 500 entries x 3 passages x 1024 dims in ${Date.now() - t0} ms (background, sliced)`)
+}
+console.log('Echo tests passed (most-connected passage, model isolation, threshold, cache invalidation).')
 
 // Older saved model selections cannot re-enable removed configurations.
 for (const previous of [null, { reflectionModel: 'off', embeddingModel: 'nomic', theme: 'dark' }]) {

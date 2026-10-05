@@ -19,6 +19,7 @@ import { parseRuns, serializeRuns } from '../../shared/textMarkup'
 import { DRAFT_KEY, readDraft } from './draft'
 import { DeleteControl } from './DeleteMark'
 import { InkScroll } from './InkScroll'
+import { JournalGrid } from './JournalGrid'
 import { Knot, RopeTimeline, SagRope } from './Rope'
 import {
   loadSpellcheck,
@@ -282,6 +283,7 @@ export default function App(): JSX.Element {
   const [letterRewriting, setLetterRewriting] = useState(false)
   const [importStatus, setImportStatus] = useState<string | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
+  const journalView = settings?.journalView ?? 'list'
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null)
   const [downloadProgress, setDownloadProgress] = useState<Partial<Record<ModelKey, DownloadProgress>>>({})
   const [modelDirBusy, setModelDirBusy] = useState(false) // a models-folder move is running
@@ -407,6 +409,15 @@ export default function App(): JSX.Element {
       e.preventDefault()
       const prevIdx = (idx - 1 + WRITING_MODE_ORDER.length) % WRITING_MODE_ORDER.length
       void applySettings({ writingMode: WRITING_MODE_ORDER[prevIdx] })
+    }
+  }
+
+  async function chooseJournalView(next: 'list' | 'grid'): Promise<void> {
+    setSettings((prev) => (prev ? { ...prev, journalView: next } : prev))
+    try {
+      setSettings(await window.api.updateSettings({ journalView: next }))
+    } catch {
+      // Remembering the choice is a nicety; the view itself already switched.
     }
   }
 
@@ -1826,6 +1837,46 @@ export default function App(): JSX.Element {
             ) : entries.length === 0 ? (
               <p className="journal__empty">Nothing written yet. It'll gather here quietly, over time.</p>
             ) : (
+              <>
+                <div className="journal__view-toggle">
+                  <div className="letters__layout-toggle">
+                    <button
+                      type="button"
+                      className={`letters__layout-btn ${journalView === 'list' ? 'letters__layout-btn--active' : ''}`}
+                      onClick={() => void chooseJournalView('list')}
+                      aria-label="List view"
+                      title="List view"
+                    >
+                      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <line x1="1" y1="3" x2="15" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <line x1="1" y1="13" x2="15" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className={`letters__layout-btn ${journalView === 'grid' ? 'letters__layout-btn--active' : ''}`}
+                      onClick={() => void chooseJournalView('grid')}
+                      aria-label="Grid view"
+                      title="Grid view"
+                    >
+                      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                        <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                        <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                        <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                {journalView === 'grid' ? (
+                  <JournalGrid
+                    entries={entries}
+                    onOpen={(id) => turnTo('read', id)}
+                    formatDate={formatDate}
+                    moodOpacity={moodMarkOpacity}
+                  />
+                ) : (
               <ul className="journal__list">
                 {entries.map((entry) => (
                   <li key={entry.id} className="journal__entry">
@@ -1849,6 +1900,8 @@ export default function App(): JSX.Element {
                   </li>
                 ))}
               </ul>
+                )}
+              </>
             )}
           </InkScroll>
         )}

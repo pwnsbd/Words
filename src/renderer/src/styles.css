@@ -1635,3 +1635,154 @@ section[aria-label='Letter'] .read__actions { max-width: 880px; }
   min-height: 40px;
 }
 .journal > .letters__header { align-items: center; min-height: 40px; }
+/* Journal grid: paper cards that show a hint of what was written and the
+   passage that echoes across other entries; they unfold on hover/focus. */
+.journal__view-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.6em 0 1em;
+}
+
+.jgrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.4em;
+  animation: fadeIn 400ms ease-out;
+}
+
+/* The cell holds the grid's shape; the card inside may grow past it. */
+.jgrid__cell {
+  position: relative;
+  height: 12.5em;
+}
+
+.jgrid__card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55em;
+  padding: 1.1em 1.1em 1.2em;
+  border: none;
+  border-radius: 6px;
+  background: radial-gradient(ellipse at center, var(--parchment-a) 55%, var(--parchment-b) 100%);
+  box-shadow: 0 4px 12px rgba(58, 51, 44, 0.1);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 200ms ease, box-shadow 250ms ease;
+}
+
+.jgrid__card:hover,
+.jgrid__card:focus-visible {
+  z-index: 5;
+  overflow: visible;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(58, 51, 44, 0.16);
+}
+
+.jgrid__card:focus-visible { outline: 1px solid var(--ink-soft); outline-offset: 2px; }
+
+.jgrid__date {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* Folding: each fold animates its row between 0fr and 1fr, so the card grows
+   like a note being opened without measuring anything. */
+.jgrid__fold {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows 250ms ease, opacity 250ms ease;
+}
+
+.jgrid__fold-inner { min-height: 0; overflow: hidden; display: block; }
+
+.jgrid__fold--open { grid-template-rows: 0fr; opacity: 0; }
+
+.jgrid__card:hover .jgrid__fold--hint,
+.jgrid__card:focus-visible .jgrid__fold--hint { grid-template-rows: 0fr; opacity: 0; }
+
+.jgrid__card:hover .jgrid__fold--open,
+.jgrid__card:focus-visible .jgrid__fold--open { grid-template-rows: 1fr; opacity: 1; }
+
+.jgrid__hint {
+  display: block;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jgrid__unfold {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.jgrid__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.jgrid__body .knot { margin-top: 0.2em; }
+.jgrid__card .knot__gap { stroke: var(--parchment-a); }
+
+.jgrid__body-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Once the opening has unfolded it already shows the plain next lines. */
+.jgrid__card:hover .jgrid__body:not(.jgrid__body--echo),
+.jgrid__card:focus-visible .jgrid__body:not(.jgrid__body--echo) { display: none; }
+
+.jgrid__card:hover .jgrid__body-text,
+.jgrid__card:focus-visible .jgrid__body-text { -webkit-line-clamp: unset; }
+
+.jgrid__reflection {
+  display: block;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jgrid__card:hover .jgrid__reflection,
+.jgrid__card:focus-visible .jgrid__reflection { white-space: normal; }
+
+@media (prefers-reduced-motion: reduce) {
+  .jgrid { animation: none; }
+  .jgrid__card, .jgrid__fold { transition: none; }
+}
