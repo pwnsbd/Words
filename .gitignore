@@ -13,7 +13,6 @@ Thumbs.db
 .mirror-eval-*/
 
 # local tooling
-.claude/
 .lingo/
 .mcp.json
 /--help
