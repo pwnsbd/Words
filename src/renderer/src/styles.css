@@ -1605,4 +1605,5 @@ button {
 :root[data-theme='dark'] .letters__card-date,
 :root[data-theme='dark'] .letters__count,
 :root[data-theme='dark'] .recap .hint,
+:root[data-theme='dark'] section[aria-label='Letter'] .hint,
 :root[data-theme='dark'] .recap__status { color: var(--ink-soft); }
