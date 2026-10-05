@@ -12,9 +12,9 @@ import {
   deleteEntry,
   listEntries,
   getEntry,
-  loadAllEntries,
   getRecentReflections,
   getReflectionsForPeriod,
+  getReflectionDates,
   THEME_MIN_ENTRIES,
   RECAP_MIN_ENTRIES
 } from './entries'
@@ -28,7 +28,10 @@ import {
   defaultModelsDir,
   resetModelContexts
 } from './llamacpp'
-import { saveLetter, listLetters, getLetter, deleteLetter } from './letters'
+import {
+  saveLetter, listLetters, getLetter, deleteLetter, replaceLetterContent,
+  computePeriod, periodQualifies
+} from './letters'
 import type { LetterTimeframe } from '../shared/types'
 import { listPatterns, dismissPattern, refreshPatterns, invalidatePatternsForEntry } from './patterns'
 import { modelJob, findMemories, rebuildMemory } from './memory'
@@ -55,35 +58,6 @@ function dateFromFilename(filename: string): string | null {
   const date = new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0)
   return isNaN(date.getTime()) || date.getFullYear() !== Number(y) ||
     date.getMonth() !== Number(m) - 1 || date.getDate() !== Number(d) ? null : date.toISOString()
-}
-
-function computePeriod(date: Date, timeframe: LetterTimeframe): { label: string; start: string; end: string } {
-  if (timeframe === 'week') {
-    const d = date.getDay()
-    const sunday = new Date(date)
-    sunday.setDate(date.getDate() - d)
-    sunday.setHours(0, 0, 0, 0)
-    const saturday = new Date(sunday)
-    saturday.setDate(sunday.getDate() + 6)
-    saturday.setHours(23, 59, 59, 999)
-    return {
-      label: `Week of ${sunday.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`,
-      start: sunday.toISOString(),
-      end: saturday.toISOString()
-    }
-  }
-  if (timeframe === 'month') {
-    const start = new Date(date.getFullYear(), date.getMonth(), 1)
-    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999)
-    return {
-      label: date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
-      start: start.toISOString(),
-      end: end.toISOString()
-    }
-  }
-  const start = new Date(date.getFullYear(), 0, 1)
-  const end = new Date(date.getFullYear(), 11, 31, 23, 59, 59, 999)
-  return { label: String(date.getFullYear()), start: start.toISOString(), end: end.toISOString() }
 }
 
 function createWindow(): void {
@@ -414,11 +388,22 @@ app.whenReady().then(() => {
         !isValidDate(periodStart) || !isValidDate(periodEnd) || Date.parse(periodStart) > Date.parse(periodEnd)) {
       throw new Error('Invalid letter period')
     }
+    if (!periodQualifies(timeframe, periodStart, periodEnd, await getReflectionDates())) return null
     const reflections = await getReflectionsForPeriod(periodStart, periodEnd)
-    if (reflections.length < RECAP_MIN_ENTRIES) return null
     const content = await modelJob(() => writeLetterForTimeframe(reflections, timeframe))
     if (!content) return null
-    return saveLetter(timeframe, periodLabel, periodStart, periodEnd, content)
+    return saveLetter(timeframe, periodLabel, periodStart, periodEnd, content, reflections.length)
+  })
+
+  // "Write again": same period, same entries, replaced in place. Null keeps the old letter.
+  ipcMain.handle('letters:regenerate', async (_event, id: string) => {
+    const letter = await getLetter(id)
+    if (!letter) return null
+    const reflections = await getReflectionsForPeriod(letter.periodStart, letter.periodEnd)
+    if (reflections.length === 0) return null
+    const content = await modelJob(() => writeLetterForTimeframe(reflections, letter.timeframe))
+    if (!content) return null
+    return replaceLetterContent(id, content, reflections.length)
   })
 
   ipcMain.handle('letters:list', (_event, timeframe?: LetterTimeframe) => listLetters(timeframe))
@@ -427,23 +412,20 @@ app.whenReady().then(() => {
 
   ipcMain.handle('letters:next-period', async (_event, timeframe: LetterTimeframe) => {
     if (!['week', 'month', 'year'].includes(timeframe)) throw new Error('Invalid letter timeframe')
-    const entries = await loadAllEntries()
-    const withReflection = entries.filter((e) => e.reflection)
-    if (withReflection.length === 0) return null
+    const dates = await getReflectionDates()
+    if (dates.length === 0) return null
 
-    const periods = new Map<string, { label: string; start: string; end: string; count: number }>()
-    for (const entry of withReflection) {
-      const period = computePeriod(new Date(entry.createdAt), timeframe)
-      const prev = periods.get(period.start)
-      if (prev) prev.count++
-      else periods.set(period.start, { ...period, count: 1 })
+    const periods = new Map<string, { label: string; start: string; end: string }>()
+    for (const date of dates) {
+      const period = computePeriod(new Date(date), timeframe)
+      if (!periods.has(period.start)) periods.set(period.start, period)
     }
 
     const existing = await listLetters(timeframe)
     const coveredStarts = new Set(existing.map((l) => l.periodStart))
 
     const available = [...periods.values()]
-      .filter((p) => !coveredStarts.has(p.start) && p.count >= RECAP_MIN_ENTRIES)
+      .filter((p) => !coveredStarts.has(p.start) && periodQualifies(timeframe, p.start, p.end, dates))
       .sort((a, b) => a.start.localeCompare(b.start))
 
     if (available.length === 0) return null

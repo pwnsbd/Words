@@ -97,6 +97,7 @@ export interface Letter {
   periodStart: string   // ISO date
   periodEnd: string     // ISO date
   content: string
+  entryCount?: number   // entries the letter was written from; absent on older letters
   createdAt: string     // ISO date
 }
 
@@ -105,6 +106,7 @@ export interface LetterSummary {
   timeframe: LetterTimeframe
   periodLabel: string
   periodStart: string
+  entryCount?: number
   createdAt: string
 }
 

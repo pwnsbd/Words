@@ -55,6 +55,7 @@ const api = {
     ipcRenderer.invoke('letters:next-period', timeframe),
   listLetters: (timeframe?: LetterTimeframe): Promise<LetterSummary[]> =>
     ipcRenderer.invoke('letters:list', timeframe),
+  regenerateLetter: (id: string): Promise<Letter | null> => ipcRenderer.invoke('letters:regenerate', id),
   getLetter: (id: string): Promise<Letter | null> => ipcRenderer.invoke('letters:get', id),
   deleteLetter: (id: string): Promise<void> => ipcRenderer.invoke('letters:delete', id)
 }

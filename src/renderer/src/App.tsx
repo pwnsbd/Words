@@ -100,6 +100,12 @@ const MODEL_LABEL: Record<ModelKey, string> = { reflection: 'reflection model', 
 
 const TIMEFRAMES: LetterTimeframe[] = ['week', 'month', 'year']
 const TIMEFRAME_LABEL: Record<LetterTimeframe, string> = { week: 'weekly', month: 'monthly', year: 'yearly' }
+// What a letter needs, in words — shown when no finished period qualifies yet.
+const LETTER_NEEDS: Record<LetterTimeframe, string> = {
+  week: 'a weekly letter needs 2 entries in a finished week',
+  month: 'a monthly letter needs an entry every week of a finished month, or 5 in it',
+  year: 'a yearly letter needs 12 entries in a finished year, or entries in 6 of its months'
+}
 
 const CANDLE_COLOR: Record<LetterTimeframe, string> = {
   week: 'var(--mode-easy)',
@@ -262,6 +268,7 @@ export default function App(): JSX.Element {
   const [letterGenerating, setLetterGenerating] = useState(false)
   const [readLetter, setReadLetter] = useState<Letter | null>(null)
   const [letterDeleteConfirming, setLetterDeleteConfirming] = useState(false)
+  const [letterRewriting, setLetterRewriting] = useState(false)
   const [importStatus, setImportStatus] = useState<string | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null)
@@ -823,7 +830,7 @@ export default function App(): JSX.Element {
     setLetterGenerating(true)
     try {
       const period = await window.api.nextLetterPeriod(letterTimeframe)
-      if (!period) { setActionError('There is no new period with enough writing for a letter yet.'); return }
+      if (!period) { setActionError(LETTER_NEEDS[letterTimeframe]); return }
       const letter = await window.api.generateLetter(letterTimeframe, period.label, period.start, period.end)
       if (letter) {
         void window.api.listLetters().then(setLetters)
@@ -833,6 +840,22 @@ export default function App(): JSX.Element {
       setActionError('The letter could not be generated. Please retry.')
     } finally {
       setLetterGenerating(false)
+    }
+  }
+
+  async function handleRewriteLetter(): Promise<void> {
+    if (!readLetter || letterRewriting) return
+    setLetterRewriting(true)
+    try {
+      const letter = await window.api.regenerateLetter(readLetter.id)
+      if (letter) {
+        setReadLetter((current) => (current && current.id === letter.id ? letter : current))
+        void window.api.listLetters().then(setLetters)
+      } else setActionError('The letter could not be written again yet. Your earlier letter is kept.')
+    } catch {
+      setActionError('The letter could not be written again. Your earlier letter is kept.')
+    } finally {
+      setLetterRewriting(false)
     }
   }
 
@@ -1436,6 +1459,7 @@ export default function App(): JSX.Element {
                       </span>
                       <span className="journal__preview letters__written-on">
                         written {formatDate(letter.createdAt)}
+                        {letter.entryCount !== undefined && ` · from ${letter.entryCount} ${letter.entryCount === 1 ? 'entry' : 'entries'}`}
                       </span>
                     </button>
                   </li>
@@ -1453,6 +1477,9 @@ export default function App(): JSX.Element {
                     <span className={`letters__timeframe-dot letters__timeframe-dot--${letter.timeframe}`} aria-hidden="true" />
                     <span className="letters__card-period">{letter.periodLabel}</span>
                     <span className="letters__card-date">{formatDate(letter.createdAt)}</span>
+                    {letter.entryCount !== undefined && (
+                      <span className="letters__card-date">from {letter.entryCount} {letter.entryCount === 1 ? 'entry' : 'entries'}</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -1479,11 +1506,34 @@ export default function App(): JSX.Element {
                     <span className={`letters__timeframe-dot letters__timeframe-dot--${readLetter.timeframe}`} aria-hidden="true" />
                     {readLetter.periodLabel}
                   </div>
+                  {readLetter.entryCount !== undefined && (
+                    <p className="hint letters__count">
+                      from {readLetter.entryCount} {readLetter.entryCount === 1 ? 'entry' : 'entries'}
+                    </p>
+                  )}
                   <p className="read__text recap__letter">{readLetter.content}</p>
                   <p className="hint" style={{ textAlign: 'right', marginTop: '1em' }}>
                     written {formatDate(readLetter.createdAt)}
                   </p>
                 </ScrollFrame>
+
+                {modelStatus?.reflectionEnabled && modelStatus.reflectionModelFound && (
+                  <button
+                    type="button"
+                    className={`corner letters__feather ${letterRewriting ? 'letters__feather--writing' : ''}`}
+                    onClick={() => void handleRewriteLetter()}
+                    disabled={letterRewriting}
+                    aria-label="write again"
+                    title="write again"
+                  >
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M20 4c-6 0-11 3-12.5 9.5L6 18l4.5-1.5C17 15 20 10 20 4z" />
+                      <path d="M6 18c2-4 5-7 9-9.5" />
+                      <path d="M4 21c1.5-.8 3-1 5-1" />
+                    </svg>
+                  </button>
+                )}
 
                 <div className="read__actions">
                   {letterDeleteConfirming ? (

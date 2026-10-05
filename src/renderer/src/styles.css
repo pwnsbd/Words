@@ -862,6 +862,47 @@ button {
   font-style: italic;
 }
 
+/* "from N entries" — a quiet line under the letter's date in the reading view. */
+.letters__count {
+  font-style: italic;
+  margin: 0 0 1em;
+}
+
+/* Feather: the "write again" mark. Ink via currentColor so it follows the
+   cream and charcoal themes. While rewriting it sways like a quill. */
+.letters__feather {
+  padding: 0.3em;
+}
+
+.letters__feather svg {
+  display: block;
+  transform-origin: 20% 85%;
+}
+
+.letters__feather:disabled {
+  cursor: default;
+}
+
+.letters__feather--writing {
+  opacity: 1;
+}
+
+.letters__feather--writing svg {
+  animation: quillWrite 1.6s ease-in-out infinite;
+}
+
+@keyframes quillWrite {
+  0%, 100% { transform: translateX(0) rotate(-6deg); }
+  25% { transform: translateX(2px) rotate(4deg); }
+  50% { transform: translateX(-1px) rotate(-2deg); }
+  75% { transform: translateX(3px) rotate(5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letters__feather--writing svg { animation: none; }
+  .letters__feather--writing { opacity: 0.45; }
+}
+
 /* ---------- Settings ---------- */
 
 .settings {

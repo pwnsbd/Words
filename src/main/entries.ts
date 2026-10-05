@@ -195,3 +195,10 @@ export async function getReflectionsForPeriod(
     .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1))
     .map((e) => e.reflection as string)
 }
+
+// Creation dates (ISO) of every entry that has a reflection â€” what letter
+// eligibility counts. Separate from the recap/themes gating above.
+export async function getReflectionDates(): Promise<string[]> {
+  const entries = await loadAllEntries()
+  return entries.filter((e) => e.reflection).map((e) => e.createdAt)
+}
