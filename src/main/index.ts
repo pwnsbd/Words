@@ -3,7 +3,7 @@ import type { OpenDialogOptions } from 'electron'
 import { dirname, join, basename } from 'path'
 import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
-import { readFile, stat, mkdir, rename, copyFile, rm } from 'fs/promises'
+import { readFile, stat, mkdir, rename, copyFile, rm, link } from 'fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import {
   saveEntry,
@@ -25,6 +25,7 @@ import {
   writeLetterForTimeframe,
   describeModelStatus,
   modelPaths,
+  defaultModelsDir,
   resetModelContexts
 } from './llamacpp'
 import { saveLetter, listLetters, getLetter, deleteLetter } from './letters'
@@ -34,6 +35,7 @@ import { modelJob, findMemories, rebuildMemory } from './memory'
 import { downloadMissingModels } from './modelDownload'
 import { getSettings, updateSettings } from './settings'
 import { stripStruckMarkup } from '../shared/textMarkup'
+import { isValidDate } from './storageValidation'
 
 const THEME_BACKGROUND: Record<'light' | 'dark', string> = {
   light: '#f4ecdc',
@@ -51,7 +53,8 @@ function dateFromFilename(filename: string): string | null {
   if (!match) return null
   const [, y, m, d] = match
   const date = new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0)
-  return isNaN(date.getTime()) ? null : date.toISOString()
+  return isNaN(date.getTime()) || date.getFullYear() !== Number(y) ||
+    date.getMonth() !== Number(m) - 1 || date.getDate() !== Number(d) ? null : date.toISOString()
 }
 
 function computePeriod(date: Date, timeframe: LetterTimeframe): { label: string; start: string; end: string } {
@@ -110,9 +113,13 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    // Only web links may leave the app; never hand arbitrary protocols to the OS.
+    if (/^https?:\/\//i.test(details.url)) {
+      void shell.openExternal(details.url).catch((error) => console.error('[words] could not open link:', error))
+    }
     return { action: 'deny' }
   })
+  mainWindow.webContents.on('will-navigate', (event) => event.preventDefault())
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
@@ -126,8 +133,9 @@ function createWindow(): void {
 // manual retry button in Settings share this, and either way any window
 // that's open should see progress, not just whichever one triggered it.
 let downloadInFlight = false
+let relocatingModels = false
 function runModelDownload(): void {
-  if (downloadInFlight) return
+  if (downloadInFlight || relocatingModels) return
   downloadInFlight = true
   const { dir, reflectionFile, embeddingFile } = modelPaths()
   void downloadMissingModels(dir, reflectionFile, embeddingFile, (progress) => {
@@ -141,27 +149,39 @@ function runModelDownload(): void {
 
 // Moves whichever model files exist from one folder to another -- used when
 // the user re-points the models folder in Settings, so they don't have to
-// shift ~5GB by hand or re-download it. rename() first (instant on the same
-// volume); copy-then-delete across volumes. Best effort: a file already at
-// the destination, or one that fails to move, is just left -- the app fills
-// any gap on the next runModelDownload().
-async function relocateModelFiles(fromDir: string, toDir: string, filenames: string[]): Promise<void> {
-  if (!fromDir || !toDir || fromDir === toDir) return
+// shift ~5GB by hand or re-download it. Hard-link on the same volume,
+// copy across volumes; keep every source until the new setting is saved.
+// A partial copy is never published as a usable model.
+async function relocateModelFiles(fromDir: string, toDir: string, filenames: string[]): Promise<string[]> {
+  if (!fromDir || !toDir || fromDir === toDir) return []
   await mkdir(toDir, { recursive: true })
+  const sources: string[] = []
   for (const name of filenames) {
     const src = join(fromDir, name)
     const dest = join(toDir, name)
     if (!existsSync(src) || existsSync(dest)) continue
+    const temporary = `${dest}.moving`
     try {
-      await rename(src, dest)
-    } catch {
+      // Remove an abandoned staging file from an interrupted prior move.
+      await rm(temporary, { force: true })
       try {
-        await copyFile(src, dest)
-        await rm(src, { force: true })
-      } catch (err) {
-        console.error('[words] could not move model file:', name, err)
+        await link(src, temporary)
+      } catch {
+        await copyFile(src, temporary)
       }
+      await rename(temporary, dest)
+      sources.push(src)
+    } finally {
+      await rm(temporary, { force: true }).catch(() => {})
     }
+  }
+  return sources
+}
+
+async function removeRelocatedSources(sources: string[]): Promise<void> {
+  for (const source of sources) {
+    // A cleanup failure leaves a duplicate, while the new model remains usable.
+    await rm(source, { force: true }).catch((err) => console.error('[words] could not remove old model copy:', err))
   }
 }
 
@@ -293,6 +313,7 @@ app.whenReady().then(() => {
   // restart. Anything still missing afterward is downloaded. Returns the
   // refreshed model status; returns null if the picker was cancelled.
   ipcMain.handle('models:choose-dir', async (event) => {
+    if (process.env.WORDS_MODELS_DIR) return null
     const win = BrowserWindow.fromWebContents(event.sender)
     const dialogOptions: OpenDialogOptions = {
       title: 'Choose a folder for the local model files',
@@ -307,11 +328,18 @@ app.whenReady().then(() => {
 
     if (downloadInFlight) return null
     return modelJob(async () => {
+      if (downloadInFlight) return null
+      relocatingModels = true
       const target = result.filePaths[0]
       const current = modelPaths()
-      await relocateModelFiles(current.dir, target, [current.reflectionFile, current.embeddingFile])
-      updateSettings({ modelsDir: target })
-      await resetModelContexts()
+      try {
+        await resetModelContexts()
+        const sources = await relocateModelFiles(current.dir, target, [current.reflectionFile, current.embeddingFile])
+        updateSettings({ modelsDir: target })
+        await removeRelocatedSources(sources)
+      } finally {
+        relocatingModels = false
+      }
       const status = describeModelStatus()
       if ((status.reflectionEnabled && !status.reflectionModelFound) || !status.embeddingModelFound) runModelDownload()
       return status
@@ -321,12 +349,18 @@ app.whenReady().then(() => {
   // Clears a chosen folder and moves the files back to the built-in default
   // location. Same move + context-reset + status contract as choose-dir.
   ipcMain.handle('models:reset-dir', () => modelJob(async () => {
-    if (downloadInFlight) return describeModelStatus()
+    if (downloadInFlight || process.env.WORDS_MODELS_DIR) return describeModelStatus()
+    relocatingModels = true
     const current = modelPaths()
-    updateSettings({ modelsDir: null })
-    const target = modelPaths().dir
-    await relocateModelFiles(current.dir, target, [current.reflectionFile, current.embeddingFile])
-    await resetModelContexts()
+    try {
+      await resetModelContexts()
+      const target = defaultModelsDir()
+      const sources = await relocateModelFiles(current.dir, target, [current.reflectionFile, current.embeddingFile])
+      updateSettings({ modelsDir: null })
+      await removeRelocatedSources(sources)
+    } finally {
+      relocatingModels = false
+    }
     const status = describeModelStatus()
     if ((status.reflectionEnabled && !status.reflectionModelFound) || !status.embeddingModelFound) runModelDownload()
     return status
@@ -359,6 +393,10 @@ app.whenReady().then(() => {
     periodStart: string,
     periodEnd: string
   ) => {
+    if (!['week', 'month', 'year'].includes(timeframe) || typeof periodLabel !== 'string' ||
+        !isValidDate(periodStart) || !isValidDate(periodEnd) || Date.parse(periodStart) > Date.parse(periodEnd)) {
+      throw new Error('Invalid letter period')
+    }
     const reflections = await getReflectionsForPeriod(periodStart, periodEnd)
     if (reflections.length < RECAP_MIN_ENTRIES) return null
     const content = await modelJob(() => writeLetterForTimeframe(reflections, timeframe))
@@ -371,6 +409,7 @@ app.whenReady().then(() => {
   ipcMain.handle('letters:delete', (_event, id: string) => deleteLetter(id))
 
   ipcMain.handle('letters:next-period', async (_event, timeframe: LetterTimeframe) => {
+    if (!['week', 'month', 'year'].includes(timeframe)) throw new Error('Invalid letter timeframe')
     const entries = await loadAllEntries()
     const withReflection = entries.filter((e) => e.reflection)
     if (withReflection.length === 0) return null
@@ -409,9 +448,10 @@ app.whenReady().then(() => {
     const result = win
       ? await dialog.showOpenDialog(win, dialogOptions)
       : await dialog.showOpenDialog(dialogOptions)
-    if (result.canceled) return { imported: 0 }
+    if (result.canceled) return { imported: 0, failed: 0 }
 
     let imported = 0
+    let failed = 0
     for (const filePath of result.filePaths) {
       try {
         const text = (await readFile(filePath, 'utf-8')).trim()
@@ -419,9 +459,12 @@ app.whenReady().then(() => {
         const fileStat = await stat(filePath)
         const createdAt = dateFromFilename(basename(filePath)) ?? fileStat.mtime.toISOString()
         const entry = await importEntry(text, createdAt)
-        await modelJob(() => findMemories(entry.id))
         imported++
+        // Saving is the import's success criterion. Model failures must not
+        // hide a successfully imported file from the returned count.
+        await modelJob(() => findMemories(entry.id)).catch((err) => console.error('[words] imported entry memory failed:', err))
       } catch (err) {
+        failed++
         // Note: keep "import" out of the tail end of this message — a
         // bundler quirk (electron-vite's CJS-shim import scanner, a regex
         // not a real parser) misreads a string literal ending in the bare
@@ -431,7 +474,7 @@ app.whenReady().then(() => {
       }
     }
     if (imported) refreshPatterns()
-    return { imported }
+    return { imported, failed }
   })
 
   createWindow()

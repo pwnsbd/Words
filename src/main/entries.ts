@@ -12,6 +12,7 @@ import type { JournalEntry, EntrySummary } from '../shared/types'
 
 
 import { stripStruckMarkup } from '../shared/textMarkup'
+import { assertStorageId, assertEntryText, isValidDate } from './storageValidation'
 
 export type { JournalEntry, EntrySummary }
 
@@ -24,7 +25,16 @@ async function ensureDir(): Promise<void> {
 }
 
 function entryPath(id: string): string {
+  assertStorageId(id)
   return join(entriesDir(), `${id}.json`)
+}
+
+function parseEntry(raw: string): JournalEntry {
+  const entry = JSON.parse(raw) as JournalEntry
+  assertStorageId(entry.id)
+  assertEntryText(entry.text)
+  if (!isValidDate(entry.createdAt)) throw new Error('Invalid entry date')
+  return entry
 }
 
 // Shared by everything below that needs to look across entries (theme
@@ -39,7 +49,8 @@ export async function loadAllEntries(): Promise<JournalEntry[]> {
     if (!file.endsWith('.json')) continue
     try {
       const raw = await fs.readFile(join(entriesDir(), file), 'utf-8')
-      entries.push(JSON.parse(raw) as JournalEntry)
+      const entry = parseEntry(raw)
+      if (file === `${entry.id}.json`) entries.push(entry)
     } catch {
       // Skip a corrupt/unreadable file rather than fail the whole read.
     }
@@ -48,13 +59,14 @@ export async function loadAllEntries(): Promise<JournalEntry[]> {
 }
 
 export async function saveEntry(text: string): Promise<JournalEntry> {
+  assertEntryText(text)
   await ensureDir()
   const entry: JournalEntry = {
     id: randomUUID(),
     createdAt: new Date().toISOString(),
     text
   }
-  await fs.writeFile(entryPath(entry.id), JSON.stringify(entry, null, 2), 'utf-8')
+  await writeEntry(entry)
   return entry
 }
 
@@ -62,14 +74,27 @@ export async function saveEntry(text: string): Promise<JournalEntry> {
 // by old-journal import so imported writing sits at the point in the
 // journal's timeline it actually happened, not "today".
 export async function importEntry(text: string, createdAt: string): Promise<JournalEntry> {
+  assertEntryText(text)
+  if (!isValidDate(createdAt)) throw new Error('Invalid entry date')
   await ensureDir()
   const entry: JournalEntry = {
     id: randomUUID(),
     createdAt,
     text
   }
-  await fs.writeFile(entryPath(entry.id), JSON.stringify(entry, null, 2), 'utf-8')
+  await writeEntry(entry)
   return entry
+}
+
+async function writeEntry(entry: JournalEntry): Promise<void> {
+  const destination = entryPath(entry.id)
+  const temporary = destination + '.tmp'
+  try {
+    await fs.writeFile(temporary, JSON.stringify(entry, null, 2), 'utf-8')
+    await fs.rename(temporary, destination)
+  } finally {
+    await fs.unlink(temporary).catch(() => {})
+  }
 }
 
 // Serialize mutations so a late embedding cannot resurrect a deleted entry.
@@ -92,11 +117,9 @@ async function updateEntryUnlocked(
 ): Promise<void> {
   try {
     const raw = await fs.readFile(entryPath(id), 'utf-8')
-    const entry = JSON.parse(raw) as JournalEntry
+    const entry = parseEntry(raw)
     const updated: JournalEntry = { ...entry, ...patch }
-    const temporary = entryPath(id) + '.tmp'
-    await fs.writeFile(temporary, JSON.stringify(updated, null, 2), 'utf-8')
-    await fs.rename(temporary, entryPath(id))
+    await writeEntry(updated)
 
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
@@ -109,15 +132,17 @@ async function updateEntryUnlocked(
 async function deleteEntryUnlocked(id: string): Promise<void> {
   try {
     await fs.unlink(entryPath(id))
-  } catch {
-    // Already gone — nothing to do.
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
   }
 }
 
 export async function getEntry(id: string): Promise<JournalEntry | null> {
+  assertStorageId(id)
   try {
     const raw = await fs.readFile(entryPath(id), 'utf-8')
-    return JSON.parse(raw) as JournalEntry
+    const entry = parseEntry(raw)
+    return entry.id === id ? entry : null
   } catch {
     return null
   }

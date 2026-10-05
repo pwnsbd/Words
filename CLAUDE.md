@@ -39,3 +39,4 @@ Lingo never scans or edits code — it only records what you tell it.
 ## Agent notes
 - 2026-10-04 — worktree agents start at origin/main (04965d5), not local main → every brief names the base commit and tells the agent to reset/rebase onto it first; merge by cherry-pick.
 - Real models live in models/ (git-ignored), so model-dependent tasks (memory threshold tuning, smoke tests) run in the main checkout, not a worktree.
+- 2026-10-04 — the user's own agent was editing the main checkout while builders finished, so a cherry-pick was blocked → run `git status --short` before every merge; if there are foreign edits, hold the merge and ask.

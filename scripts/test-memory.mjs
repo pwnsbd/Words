@@ -113,7 +113,7 @@ for (const previous of [null, { reflectionModel: 'off', embeddingModel: 'nomic',
     electron: { app: { getPath: () => '/test' } },
     path: { join: (...parts) => parts.join('/') },
     fs: { readFileSync: () => { if (!previous) throw new Error('missing'); return JSON.stringify(previous) },
-      mkdirSync: () => {}, writeFileSync: (_path, value) => { persisted = JSON.parse(value) } }
+      mkdirSync: () => {}, renameSync: () => {}, writeFileSync: (_path, value) => { persisted = JSON.parse(value) } }
   })[id] })
   const initial = settingsModule.exports.getSettings()
   assert.equal(initial.reflectionModel, 'existing')

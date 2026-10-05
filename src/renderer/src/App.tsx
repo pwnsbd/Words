@@ -15,6 +15,7 @@ import type {
   LetterTimeframe
 } from '../../shared/types'
 import { parseRuns, serializeRuns } from '../../shared/textMarkup'
+import { DRAFT_KEY, readDraft } from './draft'
 
 type View = 'patterns' | 'write' | 'journal' | 'read' | 'recap' | 'read-letter' | 'settings'
 type TurnPhase = 'idle' | 'leaving' | 'entering'
@@ -222,7 +223,8 @@ export default function App(): JSX.Element {
   // its back arrow should return wherever it was opened from, not always
   // to one fixed place.
   const [settingsOrigin, setSettingsOrigin] = useState<'write' | 'journal'>('write')
-  const [chars, setChars] = useState<Char[]>([])
+  const [recoveredDraft] = useState(() => readDraft(window.localStorage))
+  const [chars, setChars] = useState<Char[]>(recoveredDraft?.chars ?? [])
   const [remainingDeletes, setRemainingDeletes] = useState<number>(Infinity)
   const [editorFocused, setEditorFocused] = useState(false)
   const [journalIconActive, setJournalIconActive] = useState(false)
@@ -234,6 +236,9 @@ export default function App(): JSX.Element {
   const [memoryBusy, setMemoryBusy] = useState(false)
   const [sourcePassage, setSourcePassage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const saveInFlight = useRef(false)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [draftWarning, setDraftWarning] = useState<string | null>(null)
   const [entries, setEntries] = useState<EntrySummary[] | null>(null)
   const [theme, setTheme] = useState<string | null>(null)
   const [readEntry, setReadEntry] = useState<JournalEntry | null>(null)
@@ -266,15 +271,32 @@ export default function App(): JSX.Element {
     void window.api.getSettings().then((loaded) => {
       setSettings(loaded)
       document.documentElement.setAttribute('data-theme', loaded.theme)
-      setRemainingDeletes(budgetForMode(loaded.writingMode, loaded.quillDeleteLimit))
+      setRemainingDeletes(recoveredDraft?.mode === loaded.writingMode
+        ? recoveredDraft.remainingDeletes ?? Infinity
+        : budgetForMode(loaded.writingMode, loaded.quillDeleteLimit))
       setDialRotation(MODE_ANGLE[loaded.writingMode])
-    })
+    }).catch(() => setActionError('Settings could not be loaded. Please restart Words.'))
     // Needed on the write page too now, not just Settings -- deciding
     // whether to show the one-time model-download consent banner requires
     // knowing model status right from the start.
-    void window.api.getModelStatus().then(setModelStatus)
-    void window.api.listEntries().then((list) => setEntryCount(list.length))
+    void window.api.getModelStatus().then(setModelStatus).catch(() => setActionError('Local model status could not be checked. Your writing can still be saved.'))
+    void window.api.listEntries().then((list) => setEntryCount(list.length)).catch(() => setActionError('Your journal could not be opened. Check access to the journal folder and restart Words.'))
   }, [])
+
+  // Preserve the actual character/strike state and correction budget on restart.
+  useEffect(() => {
+    if (!settings) return
+    try {
+      if (chars.length) window.localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        chars, remainingDeletes: Number.isFinite(remainingDeletes) ? remainingDeletes : null,
+        mode: settings.writingMode
+      }))
+      else window.localStorage.removeItem(DRAFT_KEY)
+      setDraftWarning(null)
+    } catch {
+      setDraftWarning('Draft recovery is unavailable. Save your writing before closing Words.')
+    }
+  }, [chars, remainingDeletes, settings?.writingMode])
 
   // Keeps the dial's needle synced to the current mode whenever it changes
   // some other way (keyboard, or settings loading) -- but never fights an
@@ -352,6 +374,7 @@ export default function App(): JSX.Element {
   }
 
   async function applySettings(patch: Partial<Settings>): Promise<void> {
+    try {
     const updated = await window.api.updateSettings(patch)
     setSettings(updated)
     document.documentElement.setAttribute('data-theme', updated.theme)
@@ -361,6 +384,7 @@ export default function App(): JSX.Element {
     if (patch.writingMode !== undefined || patch.quillDeleteLimit !== undefined) {
       setRemainingDeletes(budgetForMode(updated.writingMode, updated.quillDeleteLimit))
     }
+    } catch { setActionError('Settings could not be saved. Please retry.') }
   }
 
   const plainDraft = useMemo(() => chars.map((c) => c.ch).join(''), [chars])
@@ -412,7 +436,7 @@ export default function App(): JSX.Element {
   }, [])
 
   async function handleSave(): Promise<void> {
-    if (saving) return
+    if (saveInFlight.current || composing) return
     // Trim on the char array (not the serialized string) so a leading/
     // trailing whitespace char that happens to be struck doesn't leave a
     // dangling, now-empty strike marker behind.
@@ -423,7 +447,9 @@ export default function App(): JSX.Element {
     const trimmed = chars.slice(start, end)
     if (trimmed.length === 0) return
 
+    saveInFlight.current = true
     setSaving(true)
+    setActionError(null)
     setReflection(null)
     setResurfaced([])
     try {
@@ -433,7 +459,10 @@ export default function App(): JSX.Element {
       setEntryCount((c) => c + 1)
       if (settings) setRemainingDeletes(budgetForMode(settings.writingMode, settings.quillDeleteLimit))
       focusEditor()
+    } catch {
+      setActionError('Your entry could not be saved. Your writing is still here — please retry.')
     } finally {
+      saveInFlight.current = false
       setSaving(false)
     }
   }
@@ -469,7 +498,7 @@ export default function App(): JSX.Element {
   }
 
   function appendText(text: string): void {
-    if (!text) return
+    if (!text || saveInFlight.current) return
     if (savedEntryId) beginNewEntry()
     setChars((prev) => [...prev, ...Array.from(text).map((ch) => ({ ch, struck: false }))])
   }
@@ -482,6 +511,7 @@ export default function App(): JSX.Element {
   }
 
   function handleEditorKeyDown(e: React.KeyboardEvent<HTMLElement>): void {
+    if (saveInFlight.current) { e.preventDefault(); return }
     // Mid-composition keys (including Backspace) belong to the IME.
     if (e.nativeEvent.isComposing || e.keyCode === 229) return
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -593,20 +623,27 @@ export default function App(): JSX.Element {
         setTheme(null)
         setImportStatus(null)
         void window.api.listEntries().then((list) => { setEntries(list); setEntryCount(list.length) })
-        void window.api.getTheme().then(setTheme)
+          .catch(() => setActionError('Your journal could not be opened. Please retry.'))
+        void window.api.getTheme().then(setTheme).catch(() => setTheme(null))
       }
       if (next === 'read' && entryId) {
         setReadEntry(null)
         setDeleteConfirming(false)
-        void window.api.getEntry(entryId).then(setReadEntry)
+        void window.api.getEntry(entryId).then((entry) => {
+          setReadEntry(entry)
+          if (!entry) setActionError('This entry is unavailable. It may have been deleted or its file could not be read.')
+        }).catch(() => setActionError('This entry could not be opened. Please retry.'))
       }
       if (next === 'recap') {
-        void window.api.listLetters().then(setLetters)
+        void window.api.listLetters().then(setLetters).catch(() => setActionError('Your letters could not be opened. Please retry.'))
       }
       if (next === 'read-letter' && entryId) {
         setReadLetter(null)
         setLetterDeleteConfirming(false)
-        void window.api.getLetter(entryId).then(setReadLetter)
+        void window.api.getLetter(entryId).then((letter) => {
+          setReadLetter(letter)
+          if (!letter) setActionError('This letter is unavailable. It may have been deleted or its file could not be read.')
+        }).catch(() => setActionError('This letter could not be opened. Please retry.'))
       }
       if (next === 'settings') {
         void window.api.getModelStatus().then(setModelStatus)
@@ -631,16 +668,24 @@ export default function App(): JSX.Element {
 
   async function handleDelete(): Promise<void> {
     if (!readEntry) return
-    await window.api.deleteEntry(readEntry.id)
-    turnTo(readOrigin)
+    try {
+      await window.api.deleteEntry(readEntry.id)
+      setEntryCount((count) => Math.max(0, count - 1))
+      turnTo(readOrigin)
+    } catch { setActionError('The entry could not be deleted. Please retry.') }
   }
 
   async function handleImport(): Promise<void> {
+    try {
     const result = await window.api.importEntries()
+    if (result.failed > 0) setActionError(`${result.failed} file(s) could not be imported. ${result.imported} entries were added; retry only the failed files.`)
     if (result.imported > 0) {
       setImportStatus(`${result.imported} ${result.imported === 1 ? 'entry' : 'entries'} added.`)
-      void window.api.listEntries().then(setEntries)
+      const list = await window.api.listEntries()
+      setEntries(list)
+      setEntryCount(list.length)
     }
+    } catch { setActionError('Import could not finish. Check the journal before retrying; some files may have been added.') }
   }
 
   async function handleGenerateLetter(): Promise<void> {
@@ -648,12 +693,14 @@ export default function App(): JSX.Element {
     setLetterGenerating(true)
     try {
       const period = await window.api.nextLetterPeriod(letterTimeframe)
-      if (!period) return
+      if (!period) { setActionError('There is no new period with enough writing for a letter yet.'); return }
       const letter = await window.api.generateLetter(letterTimeframe, period.label, period.start, period.end)
       if (letter) {
         void window.api.listLetters().then(setLetters)
         turnTo('read-letter', letter.id)
-      }
+      } else setActionError('A letter could not be written yet. Check Local models in Settings and try again.')
+    } catch {
+      setActionError('The letter could not be generated. Please retry.')
     } finally {
       setLetterGenerating(false)
     }
@@ -661,8 +708,10 @@ export default function App(): JSX.Element {
 
   async function handleDeleteLetter(): Promise<void> {
     if (!readLetter) return
-    await window.api.deleteLetter(readLetter.id)
-    turnTo('recap')
+    try {
+      await window.api.deleteLetter(readLetter.id)
+      turnTo('recap')
+    } catch { setActionError('The letter could not be deleted. Please retry.') }
   }
 
   const filteredLetters = useMemo(
@@ -674,7 +723,7 @@ export default function App(): JSX.Element {
   // failed (or a file was deleted) -- kicks off the same fetch again.
   function handleDownloadModels(): void {
     setDownloadProgress({})
-    void window.api.downloadModels()
+    void window.api.downloadModels().catch(() => setActionError('Model setup could not start. Please retry.'))
   }
 
   // Move the model files to a folder the user picks (or back to the default).
@@ -688,6 +737,8 @@ export default function App(): JSX.Element {
       if (!status) return
       setModelStatus(status)
       setSettings(await window.api.getSettings())
+    } catch {
+      setActionError('The models folder could not be changed. Check the folder permissions and available space, then retry.')
     } finally {
       setModelDirBusy(false)
     }
@@ -698,6 +749,8 @@ export default function App(): JSX.Element {
     try {
       setModelStatus(await window.api.resetModelsDir())
       setSettings(await window.api.getSettings())
+    } catch {
+      setActionError('The default models folder could not be restored. Please retry.')
     } finally {
       setModelDirBusy(false)
     }
@@ -709,6 +762,8 @@ export default function App(): JSX.Element {
     try {
       const updated = await window.api.regenerateReflection(readEntry.id)
       if (updated) setReadEntry((cur) => (cur && cur.id === updated.id ? updated : cur))
+    } catch {
+      setActionError('The reflection could not be regenerated. Check Local models in Settings and retry.')
     } finally {
       setListeningAgain(false)
     }
@@ -735,6 +790,12 @@ export default function App(): JSX.Element {
 
   return (
     <div className="stage">
+      {(actionError || draftWarning) && (
+        <div className="app-error" role="alert">
+          {actionError || draftWarning}
+          {actionError && <button type="button" onClick={() => setActionError(null)} aria-label="Dismiss message">×</button>}
+        </div>
+      )}
       <div className={`page page--${turnPhase}`}>
         {view === 'write' ? (
           <section className="write" aria-label="Write">
@@ -793,6 +854,7 @@ export default function App(): JSX.Element {
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
+                  readOnly={saving}
                   onCompositionStart={() => setComposing(' ')}
                   onCompositionUpdate={(e) => setComposing(e.data || ' ')}
                   onCompositionEnd={(e) => commitIme(e.currentTarget)}
@@ -821,9 +883,12 @@ export default function App(): JSX.Element {
                   ))}
                 </div>
               ) : (
-                <span className="hint">
-                  {plainDraft.trim() ? 'ctrl + enter to set this down' : ' '}
-                </span>
+                plainDraft.trim() ? (
+                  <button type="button" className="journal__link" disabled={saving || !!composing}
+                    onClick={() => void handleSave()}>
+                    {saving ? 'saving…' : 'save entry · ctrl + enter'}
+                  </button>
+                ) : <span className="hint" role="status">{savedEntryId ? 'saved' : ' '}</span>
               )}
             </div>
 
@@ -1267,6 +1332,11 @@ export default function App(): JSX.Element {
 
             <div className="settings__group">
               <h2 className="settings__label">About Words</h2>
+              <p className="settings__about-line">
+                Experimental preview. Reflections and connections can be mistaken. Keep a separate backup
+                of important writing. Local models download about 5.5 GB on first launch; writing works
+                while they set up. Unsaved drafts are recovered on this device when you reopen Words.
+              </p>
               <p className="settings__about-line">
                 Words is a local-first journal — everything you write stays on this machine; nothing is sent
                 anywhere.

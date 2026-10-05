@@ -68,6 +68,30 @@
   box-sizing: border-box;
 }
 
+.app-error {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: min(620px, calc(100% - 32px));
+  padding: 12px 16px;
+  border: 1px solid var(--ink-soft);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.app-error button {
+  float: right;
+  margin-left: 12px;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
 /* Browsers don't let form controls inherit font-family by default —
    textarea/input/button/select need it set explicitly or they silently
    fall back to the OS UI font, which is exactly the mismatch this fixes. */

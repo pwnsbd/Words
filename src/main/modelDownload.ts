@@ -14,10 +14,12 @@
 // closed mid-download) is never mistaken for a real, usable model file.
 
 import { createWriteStream, existsSync } from 'fs'
-import { mkdir, rename } from 'fs/promises'
+import { mkdir, rename, rm } from 'fs/promises'
+import { pipeline } from 'stream/promises'
 import { join } from 'path'
 import https from 'https'
 import type { IncomingMessage } from 'http'
+import type { ClientRequest } from 'http'
 import type { ModelKey, DownloadProgress } from '../shared/types'
 
 export type { DownloadProgress }
@@ -60,7 +62,11 @@ function followRedirects(
           onError(new Error('too many redirects'))
           return
         }
-        followRedirects(res.headers.location, onResponse, onError, redirectsLeft - 1)
+        try {
+          followRedirects(new URL(res.headers.location, url).href, onResponse, onError, redirectsLeft - 1)
+        } catch (error) {
+          onError(error instanceof Error ? error : new Error(String(error)))
+        }
         return
       }
       if (status !== 200) {
@@ -71,6 +77,7 @@ function followRedirects(
       onResponse(res)
     })
     .on('error', onError)
+    .setTimeout(60_000, function (this: ClientRequest) { this.destroy(new Error('Download timed out; please retry')) })
 }
 
 async function downloadOne(
@@ -83,27 +90,36 @@ async function downloadOne(
   const partialPath = `${destPath}.part`
   await mkdir(join(destPath, '..'), { recursive: true })
 
-  await new Promise<void>((resolve, reject) => {
+  try {
+    await new Promise<void>((resolve, reject) => {
     followRedirects(
       url,
       (res) => {
-        const totalBytes = Number(res.headers['content-length']) || approxBytes
+        const expectedBytes = Number(res.headers['content-length']) || 0
+        const totalBytes = expectedBytes || approxBytes
         let receivedBytes = 0
         const file = createWriteStream(partialPath)
         res.on('data', (chunk: Buffer) => {
           receivedBytes += chunk.length
           onProgress({ key, receivedBytes, totalBytes, done: false })
         })
-        res.on('error', reject)
-        file.on('error', reject)
-        file.on('finish', () => file.close(() => resolve()))
-        res.pipe(file)
+        // pipeline destroys both streams and waits for close on failure, so
+        // a retry cannot collide with a writer left behind by the old attempt.
+        void pipeline(res, file).then(() => {
+          if (receivedBytes === 0 || (expectedBytes && receivedBytes !== expectedBytes)) {
+            reject(new Error('Incomplete model download; please retry'))
+          } else resolve()
+        }, reject)
       },
       reject
     )
-  })
+    })
 
-  await rename(partialPath, destPath)
+    await rename(partialPath, destPath)
+  } catch (error) {
+    await rm(partialPath, { force: true }).catch(() => {})
+    throw error
+  }
 }
 
 // Downloads whichever of the two default models is missing under the

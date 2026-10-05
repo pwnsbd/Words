@@ -2,6 +2,12 @@
 
 A local-first journaling companion. See [words-app-brief.md](./words-app-brief.md) for the product brief.
 
+## Experimental preview
+
+See the [release review and remaining checks](docs/experimental-release-review.md) before distributing a build. Unsaved writing now recovers locally after restart, including strikes and the quill correction budget. Use the visible **save entry** control or **Ctrl+Enter** to save permanently; failures keep the draft and display a message. Recovery is best effort and does not replace a separate backup.
+
+`npm run test:backend` checks storage and model-file failure handling. `npm run test:release` builds the app and tests draft/save behavior in an isolated Electron profile without model downloads or access to your journal.
+
 ## Similar thoughts and lightweight models
 
 Words compares overlapping passages, so an idea buried in a long entry can connect to earlier writing with different wording. After saving, up to three matches show the older passage, its date, and an **open entry** link. Opening a saved entry also finds earlier matches. All earlier dates are eligible, including yesterday; the old 14-day exclusion is gone. The source passage remains visible when following a link.
@@ -50,9 +56,11 @@ Analysis upgrades re-check older results while preserving dismissals. Results an
   folder — nothing is sent anywhere.
 - After saving, a soft one-line reflection quietly fades in once the local model responds (this never
   blocks the writing surface — if the model isn't running, the entry still saves fine, just without a line).
-  The reflection describes what the entry *sounds like* as writing ("there's a tired, worn-down quality to
-  this") rather than diagnosing how you feel ("you're feeling...") — see `REFLECTION_SYSTEM_PROMPT` in
-  `src/main/llamacpp.ts`.
+  The reflection notices a thought, question, or tension grounded in the entry, leaving its meaning with
+  the writer. It avoids judgment, advice, personality labels, and invented motives or past connections.
+  Simple entries can receive simple observations; it should not manufacture depth. See
+  `REFLECTION_SYSTEM_PROMPT` in `src/main/llamacpp.ts`. Existing reflections stay unchanged unless you use
+  **listen again** in the reading view.
 - **Resurfacing** uses passage embeddings and dated source links, independently of reflections. Sensitivity is configurable. Matches suggest related ideas; they do not establish that two thoughts or programs are equivalent.
 - **Mood mark**: alongside the reflection, the model also rates the entry's emotional weight (-2 to 2,
   never shown as a number). Each entry in the journal view carries a small dot beside its date — denser
@@ -128,14 +136,11 @@ Analysis upgrades re-check older results while preserving dismissals. Results an
 
 ## Known gaps
 
-- **No "regenerate reflection" for an existing entry.** Every entry's reflection/mood is generated once, at
-  save time, with whichever model was loaded then. Comparing two models on the same text means re-saving it
-  as a fresh entry under each — see `sample-entries.md` for a ready-made set to do that with.
+- **Reflection quality varies.** The reading view's "listen again" control regenerates a reflection with the active local model; its output can still be mistaken.
 - **Old journal import is `.txt`/`.md` only** — no PDF, no other journaling apps' export formats.
 - **Matching needs broader evaluation** — Qwen has been exercised locally on paraphrases and code. Similarity thresholds are starting values, not calibrated probabilities.
 - **Code equivalence is not verified** — embeddings can match code with opposite behavior. This feature recalls related writing; it is not a duplicate-code proof or an assessment of originality.
-- **The custom write surface has no spellcheck or IME composition** — a trade-off of replacing the native
-  `<textarea>` with a fully React-controlled surface for the writing-mode strikethrough feature.
+- **The custom write surface has no native spellcheck or conventional cursor editing.** IME composition uses a hidden textarea, but still needs hands-on multilingual testing.
 - **The installer is unsigned** — no code-signing certificate, so Windows SmartScreen flags it as an
   unrecognized publisher on first run ("More info" → "Run anyway" gets past it). Fine for testing on your own
   machine; would want fixing before handing this to anyone else.

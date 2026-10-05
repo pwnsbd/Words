@@ -17,6 +17,8 @@
     "test:memory:model": "node scripts/test-memory.mjs --model",
     "seed:demo": "node scripts/seed-demo.mjs",
     "test:patterns": "node scripts/test-patterns.mjs",
+    "test:backend": "node scripts/test-backend.mjs",
+    "test:release": "npm run build && electron scripts/smoke-release.mjs",
     "test:philosophy": "node scripts/verify-philosophy.mjs"
   },
   "dependencies": {

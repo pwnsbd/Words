@@ -9,6 +9,7 @@ models/
 Thumbs.db
 
 .memory-smoke-*/
+.release-smoke-*/
 
 # local tooling
 .claude/

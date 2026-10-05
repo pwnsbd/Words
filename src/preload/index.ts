@@ -27,7 +27,7 @@ const api = {
   },
   getTheme: (): Promise<string | null> => ipcRenderer.invoke('entries:theme'),
   getRecap: (): Promise<string | null> => ipcRenderer.invoke('entries:recap'),
-  importEntries: (): Promise<{ imported: number }> => ipcRenderer.invoke('entries:import-files'),
+  importEntries: (): Promise<{ imported: number; failed: number }> => ipcRenderer.invoke('entries:import-files'),
   getSettings: (): Promise<Settings> => ipcRenderer.invoke('settings:get'),
   updateSettings: (patch: Partial<Settings>): Promise<Settings> =>
     ipcRenderer.invoke('settings:update', patch),
