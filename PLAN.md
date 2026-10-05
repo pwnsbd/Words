@@ -18,6 +18,7 @@
 | T3 | Spellcheck + IME composition on write surface | builder | see docs/contracts/write-surface.md | contract done-check | done ce9290a + 5a92738 + b55576f (release smoke passes) |
 | T4 | Mirror quality: evaluate + tune thresholds on 20 samples | builder (main checkout, needs models) | src/main/memory.ts, similarityIndex.ts, docs/memory-models.md | report of hits/misses before/after | done 90b4690 (rare 0.74, balanced 0.68, often 0.61) |
 | T4b | Letters: finished-period rules (week 2; month every-week or 5; year 12 or 6 months), "from N entries", feather "write again" | builder | docs/contracts/letters.md | test:letters | done 8af8ec8 |
+| T4c | UI polish: delete icon + top-right actions (7c003a2), Patterns rope + knots (d2c27c2), ink scrollbar (29eb578) | builder | renderer | user visual check | merged, visual check pending |
 | T5 | First-run: mirror visible early (empty-state copy) | Conductor + user (taste) | App.tsx | user approves | done ae8c8ef |
 | T6 | README rewrite around the mirror + GH Pages showcase + demo | Conductor drafts, builder builds | README.md, docs/index.html | user approves | after T5 |
 | T7 | docs/release-readiness.md + fresh-account install test | Conductor + user | docs/ | install test passes | last |
