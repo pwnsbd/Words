@@ -17,6 +17,7 @@ import type {
 import { parseRuns, serializeRuns } from '../../shared/textMarkup'
 import { DRAFT_KEY, readDraft } from './draft'
 import { DeleteControl } from './DeleteMark'
+import { InkScroll } from './InkScroll'
 import { Knot, RopeTimeline, SagRope } from './Rope'
 import {
   loadSpellcheck,
@@ -976,8 +977,8 @@ export default function App(): JSX.Element {
                 </p>
               </div>
             )}
-            <div
-              ref={editorRef}
+            <InkScroll
+              innerRef={editorRef}
               className="write__editor"
               tabIndex={0}
               role="textbox"
@@ -1034,7 +1035,7 @@ export default function App(): JSX.Element {
                   }}
                 />
               </span>
-            </div>
+            </InkScroll>
 
             {spellMenu && (
               <div
@@ -1079,7 +1080,7 @@ export default function App(): JSX.Element {
 
             <div className="write__footer">
               {reflection || resurfaced.length > 0 || showMemoryHint ? (
-                <div className="afterthought" key={savedEntryId}>
+                <InkScroll className="afterthought" key={savedEntryId}>
                   {reflection && <p className="reflection">{reflection}</p>}
                   {showMemoryHint && (
                     <p className="memory-hint">Words will start remembering after a few entries.</p>
@@ -1092,10 +1093,10 @@ export default function App(): JSX.Element {
                       }}>
                         a similar thought on {formatDate(match.createdAt)} — open entry
                       </button>
-                      <blockquote className="memory-quote">{match.preview}</blockquote>
+                      <InkScroll as="blockquote" className="memory-quote">{match.preview}</InkScroll>
                     </div>
                   ))}
-                </div>
+                </InkScroll>
               ) : (
                 plainDraft.trim() ? (
                   <button type="button" className="journal__link" disabled={saving || !!composing}
@@ -1198,7 +1199,7 @@ export default function App(): JSX.Element {
             </div>
           </section>
         ) : view === 'patterns' ? (
-          <section className="journal patterns" aria-label="Patterns">
+          <InkScroll as="section" className="journal patterns" aria-label="Patterns">
             <button type="button" className="corner corner--write" onClick={() => turnTo('write')}
               aria-label="Back to writing" title="Back to writing">‹</button>
             <p className="patterns__eyebrow">Threads through your writing</p>
@@ -1244,9 +1245,9 @@ export default function App(): JSX.Element {
                 )}
               </article>
             ))}
-          </section>
+          </InkScroll>
         ) : view === 'read' ? (
-          <section className="read" aria-label="Entry">
+          <InkScroll as="section" className="read" aria-label="Entry">
             <button
               type="button"
               className="corner corner--write"
@@ -1294,7 +1295,7 @@ export default function App(): JSX.Element {
                   {sourcePassage && (
                     <aside className="memory-source">
                       <p>Passage you followed here</p>
-                      <blockquote className="memory-quote">{sourcePassage}</blockquote>
+                      <InkScroll as="blockquote" className="memory-quote">{sourcePassage}</InkScroll>
                       <button className="journal__link" onClick={() => setSourcePassage(null)}>dismiss</button>
                     </aside>
                   )}
@@ -1304,7 +1305,7 @@ export default function App(): JSX.Element {
                         setSourcePassage(match.preview)
                         turnTo('read', match.id)
                       }}>a similar thought on {formatDate(match.createdAt)} — open entry</button>
-                      <blockquote className="memory-quote">{match.preview}</blockquote>
+                      <InkScroll as="blockquote" className="memory-quote">{match.preview}</InkScroll>
                     </div>
                   ))}
                   {readEntry.reflection && <p className="reflection read__reflection">{readEntry.reflection}</p>}
@@ -1324,9 +1325,9 @@ export default function App(): JSX.Element {
                 )}
               </>
             )}
-          </section>
+          </InkScroll>
         ) : view === 'recap' ? (
-          <section className="journal recap" aria-label="Letters">
+          <InkScroll as="section" className="journal recap" aria-label="Letters">
             <button
               type="button"
               className="corner corner--write"
@@ -1478,9 +1479,9 @@ export default function App(): JSX.Element {
                 ))}
               </div>
             )}
-          </section>
+          </InkScroll>
         ) : view === 'read-letter' ? (
-          <section className="read" aria-label="Letter">
+          <InkScroll as="section" className="read" aria-label="Letter">
             <button
               type="button"
               className="corner corner--write"
@@ -1537,9 +1538,9 @@ export default function App(): JSX.Element {
                 </ScrollFrame>
               </>
             )}
-          </section>
+          </InkScroll>
         ) : view === 'settings' ? (
-          <section className="settings" aria-label="Settings">
+          <InkScroll as="section" className="settings" aria-label="Settings">
             <button
               type="button"
               className="corner corner--write"
@@ -1744,9 +1745,9 @@ export default function App(): JSX.Element {
                 <p className="settings__about-line"> </p>
               )}
             </div>
-          </section>
+          </InkScroll>
         ) : (
-          <section className="journal" aria-label="Journal">
+          <InkScroll as="section" className="journal" aria-label="Journal">
             <button
               type="button"
               className="corner corner--write"
@@ -1822,7 +1823,7 @@ export default function App(): JSX.Element {
                 ))}
               </ul>
             )}
-          </section>
+          </InkScroll>
         )}
       </div>
     </div>

@@ -1492,3 +1492,103 @@ button {
   margin: 4px 0;
   background: var(--scroll-divider);
 }
+
+/* ---------- Ink scrollbar (see InkScroll.tsx) ---------- */
+
+.ink-host { scrollbar-width: none; }
+.ink-host::-webkit-scrollbar { display: none; }
+
+.ink-scroll {
+  position: fixed;
+  width: 10px;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1000ms ease;
+}
+.ink-scroll[data-active='false'] { display: none; }
+.ink-scroll[data-visible='true'] {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 250ms ease;
+}
+
+.ink-scroll__track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 4px;
+  width: 1px;
+  background: var(--ink-faint);
+  opacity: 0.22;
+}
+
+.ink-scroll__thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  cursor: grab;
+  touch-action: none;
+  /* a soft ink bleed around the stroke while it travels */
+  filter: drop-shadow(0 0 0 transparent);
+  transition: filter 400ms ease;
+}
+.ink-scroll[data-dragging='true'] .ink-scroll__thumb { cursor: grabbing; }
+.ink-scroll__thumb[data-moving='true'] {
+  filter: drop-shadow(0 0 2.5px color-mix(in srgb, var(--ink-soft) 55%, transparent));
+  transition: filter 120ms ease;
+}
+
+/* The pen stroke: narrow, thickest in the middle, pointed at both ends. */
+.ink-scroll__stroke {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 2.5px;
+  width: 4px;
+  background: var(--ink-soft);
+  clip-path: polygon(50% 0, 100% 14%, 100% 86%, 50% 100%, 0 86%, 0 14%);
+  opacity: 0.85;
+}
+.ink-scroll__stroke[data-edge='top'] { transform-origin: top center; }
+.ink-scroll__stroke[data-edge='bottom'] { transform-origin: bottom center; }
+.ink-scroll__stroke--settle { animation: ink-settle 300ms ease-out; }
+
+/* A faint trail left behind the direction of travel. */
+.ink-scroll__trail {
+  position: absolute;
+  right: 3.5px;
+  width: 2px;
+  height: 34px;
+  opacity: 0;
+  transition: opacity 400ms ease;
+  pointer-events: none;
+}
+.ink-scroll__thumb[data-dir='down'] .ink-scroll__trail {
+  bottom: 100%;
+  background: linear-gradient(to top, var(--ink-faint), transparent);
+}
+.ink-scroll__thumb[data-dir='up'] .ink-scroll__trail {
+  top: 100%;
+  background: linear-gradient(to bottom, var(--ink-faint), transparent);
+}
+.ink-scroll__thumb[data-moving='true'] .ink-scroll__trail {
+  opacity: 0.5;
+  transition: opacity 80ms ease;
+}
+
+@keyframes ink-settle {
+  0% { transform: scaleY(1) scaleX(1); }
+  35% { transform: scaleY(0.82) scaleX(1.25); }
+  100% { transform: scaleY(1) scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-scroll,
+  .ink-scroll[data-visible='true'] { transition: none; }
+  .ink-scroll__stroke--settle { animation: none; }
+  .ink-scroll__trail { display: none; }
+  .ink-scroll__thumb,
+  .ink-scroll__thumb[data-moving='true'] { filter: none; transition: none; }
+}
