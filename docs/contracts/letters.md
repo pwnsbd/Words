@@ -27,3 +27,32 @@
 - that an unfinished current period is excluded;
 - the week/month boundary;
 - that a letter with no saved count still loads.
+
+## Auto-fill (added 2026-10-04)
+
+**Trigger:** opening the Letters page. Nothing runs in the background otherwise, and nothing is shown as a notification.
+
+**Behaviour:**
+- Main process finds every eligible, uncovered period (week, month and year, using the rules above), sorted oldest first, and writes them one after another through `modelJob`.
+- Each letter appears in the list or grid as soon as it's saved. The queue keeps going if the user leaves the page or turns the candle to another timeframe.
+- If a fill is already running, a second one isn't started.
+- Pushed events: `letters:written` (one per saved letter) and `letters:fill-progress` (`{ done, total, currentLabel }`).
+- Status line on the Letters page while running: "writing the week of Jul 5, 2026… (2 of 7)" (use the period label). It's hidden when finished.
+- New IPC channel `letters:fill-missing`, started by the renderer when Letters opens.
+
+**Button:** "write a … letter" is removed from normal use.
+- When nothing is missing for the selected timeframe, show the existing specific "needs…" message as a quiet hint, not an error.
+- If any letter failed to write, show a quiet "try again" link that re-runs the fill.
+
+**Errors:**
+- Model missing or disabled → no fill. Show the existing soft model-unavailable tone.
+- One letter fails → skip it, keep going, and offer "try again".
+- The app quits mid-fill → nothing is half-saved, thanks to the atomic writes.
+
+**Done-check:** `test:letters` covers:
+- fill order (oldest first, across timeframes);
+- skipping covered periods;
+- no duplicates when fill is called twice concurrently;
+- continuing after one failure.
+
+Plus typecheck, build, `test:backend` and `test:release`.
