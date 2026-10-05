@@ -17,6 +17,7 @@ import type {
 import { parseRuns, serializeRuns } from '../../shared/textMarkup'
 import { DRAFT_KEY, readDraft } from './draft'
 import { DeleteControl } from './DeleteMark'
+import { Knot, RopeTimeline, SagRope } from './Rope'
 import {
   loadSpellcheck,
   spellReady,
@@ -1216,16 +1217,17 @@ export default function App(): JSX.Element {
             )}
             {patterns?.patterns.map(pattern => (
               <article className="pattern" key={pattern.id}>
+                <SagRope />
                 <button type="button" className="pattern__heading" aria-expanded={expandedPattern === pattern.id}
                   aria-controls={`pattern-${pattern.id}`} onClick={() => setExpandedPattern(expandedPattern === pattern.id ? null : pattern.id)}>
-                  <span className="pattern__knot" aria-hidden="true" />
+                  <Knot />
                   <span>{pattern.title}</span><span className="pattern__toggle" aria-hidden="true">{expandedPattern === pattern.id ? '−' : '+'}</span>
                 </button>
                 <p className="pattern__dates">Appeared in {pattern.evidence.length} entries · {formatDate(pattern.evidence[0].createdAt)} – {formatDate(pattern.evidence[pattern.evidence.length - 1].createdAt)}</p>
                 <p className="pattern__description">{pattern.description}</p>
                 {expandedPattern === pattern.id && (
                   <div id={`pattern-${pattern.id}`}>
-                    <ol className="pattern__timeline">
+                    <RopeTimeline>
                       {pattern.evidence.map(evidence => (
                         <li key={evidence.entryId}>
                           <button className="journal__link" onClick={() => {
@@ -1235,7 +1237,7 @@ export default function App(): JSX.Element {
                           <blockquote>{evidence.text}</blockquote>
                         </li>
                       ))}
-                    </ol>
+                    </RopeTimeline>
                     <button className="journal__link pattern__dismiss" disabled={dismissBusy !== null}
                       onClick={() => void dismissIdea(pattern.id)}>{dismissBusy === pattern.id ? 'setting this aside…' : 'these aren’t related'}</button>
                   </div>

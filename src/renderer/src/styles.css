@@ -1408,18 +1408,32 @@ button {
 .patterns__eyebrow { color: var(--ink-faint); font-size: 12px; letter-spacing: .06em; margin: 0 0 10px; }
 .patterns__intro { color: var(--ink-soft); font-size: 15px; line-height: 1.7; margin: 0 0 22px; }
 .patterns__status { color: var(--ink-faint); font-size: 13px; font-style: italic; margin-bottom: 18px; }
-.pattern { border-top: 1px solid var(--ink-faint); padding: 24px 0; }
+.pattern { position: relative; padding: 30px 0 24px; }
+.sagrope { position: absolute; left: 0; top: 0; width: 100%; height: 10px; overflow: visible; }
+.sagrope path { fill: none; stroke: var(--ink-faint); stroke-width: 1.6; stroke-linecap: round; opacity: .7; vector-effect: non-scaling-stroke; }
 .pattern__heading { display: flex; align-items: center; gap: 12px; background: none; border: 0; color: var(--ink); font: inherit; font-size: 18px; text-align: left; cursor: pointer; width: 100%; padding: 0; }
-.pattern__knot { width: 8px; height: 8px; border: 1px solid var(--ink-soft); border-radius: 50%; flex-shrink: 0; }
+.knot { flex-shrink: 0; }
+.knot__ink, .rope__knot .knot__ink { fill: none; stroke: var(--ink); stroke-width: 1.7; stroke-linecap: round; }
+.knot__gap { fill: none; stroke: var(--paper); stroke-width: 4.4; stroke-linecap: round; }
 .pattern__toggle { margin-left: auto; color: var(--ink-faint); }
-.pattern__dates { color: var(--ink-faint); font-size: 12px; margin: 10px 0 12px 21px; }
-.pattern__description { color: var(--ink-soft); font-size: 14px; line-height: 1.7; margin: 0 0 0 21px; }
-.pattern__timeline { list-style: none; border-left: 1px solid var(--ink-faint); margin: 25px 0 20px 4px; padding: 0 0 0 24px; }
+.pattern__dates { color: var(--ink-faint); font-size: 12px; margin: 10px 0 12px 28px; }
+.pattern__description { color: var(--ink-soft); font-size: 14px; line-height: 1.7; margin: 0 0 0 28px; }
+.rope { position: relative; margin: 25px 0 20px 0; }
+.pattern__timeline { list-style: none; margin: 0; padding: 0 0 0 44px; position: relative; }
 .pattern__timeline li { position: relative; margin-bottom: 24px; }
-.pattern__timeline li::before { content: ''; position: absolute; left: -29px; top: 5px; width: 7px; height: 7px; border: 1px solid var(--ink-soft); border-radius: 50%; background: var(--paper); }
+.rope__svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.rope__peg circle { fill: var(--ink-soft); }
+.rope__peg path { stroke: var(--ink-faint); stroke-width: 1.4; stroke-linecap: round; }
+.rope__body { fill: none; stroke: var(--ink-soft); stroke-width: 3.6; stroke-linecap: round; }
+.rope__twist { fill: none; stroke: var(--paper); stroke-width: 1.1; stroke-dasharray: 1.2 3; }
+.rope__fray path { fill: none; stroke: var(--ink-soft); stroke-width: 1; stroke-linecap: round; }
+.rope__hang { transform-origin: 14px 4px; transform-box: view-box; animation: rope-settle 1100ms ease-out 450ms both; }
+.rope__clip { animation: rope-drop 600ms cubic-bezier(.3, .6, .35, 1) both; }
+@keyframes rope-drop { from { height: 0; } }
+@keyframes rope-settle { 0% { transform: rotate(0); } 35% { transform: rotate(.9deg); } 70% { transform: rotate(-.5deg); } 100% { transform: rotate(0); } }
 .pattern__timeline blockquote { margin: 10px 0 0; font-size: 14px; line-height: 1.8; color: var(--ink-soft); white-space: pre-wrap; overflow-wrap: anywhere; }
 .pattern__dismiss { margin-left: 28px; }
-@media (prefers-reduced-motion: reduce) { .patterns-icon svg { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .patterns-icon svg { transition: none; } .rope__clip, .rope__hang { animation: none; } }
 
 /* Spellcheck: a soft dotted underline in the theme's ink, never red. Struck
    words are never marked. The right-click menu is a small paper card. */
