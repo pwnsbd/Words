@@ -30,7 +30,7 @@ import {
 } from './llamacpp'
 import {
   saveLetter, listLetters, getLetter, deleteLetter, replaceLetterContent,
-  computePeriod, periodQualifies
+  computePeriod, periodQualifies, fillMissingLetters
 } from './letters'
 import type { LetterTimeframe } from '../shared/types'
 import { listPatterns, dismissPattern, refreshPatterns, invalidatePatternsForEntry } from './patterns'
@@ -409,6 +409,34 @@ app.whenReady().then(() => {
   ipcMain.handle('letters:list', (_event, timeframe?: LetterTimeframe) => listLetters(timeframe))
   ipcMain.handle('letters:get', (_event, id: string) => getLetter(id))
   ipcMain.handle('letters:delete', (_event, id: string) => deleteLetter(id))
+
+  // Opening Letters: write every missing eligible letter, oldest first, one at a time.
+  ipcMain.handle('letters:fill-missing', async () => {
+    const status = describeModelStatus()
+    if (!status.reflectionEnabled || !status.reflectionModelFound) {
+      return { started: false, written: 0, failed: 0, modelUnavailable: true }
+    }
+    const broadcast = (channel: string, payload: unknown): void => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) win.webContents.send(channel, payload)
+      }
+    }
+    return fillMissingLetters({
+      reflectionDates: getReflectionDates,
+      write: async (item) => {
+        const reflections = await getReflectionsForPeriod(item.start, item.end)
+        if (reflections.length === 0) return null
+        const content = await modelJob(() => writeLetterForTimeframe(reflections, item.timeframe))
+        return content ? { content, entryCount: reflections.length } : null
+      },
+      onWritten: (letter) => broadcast('letters:written', {
+        id: letter.id, timeframe: letter.timeframe, periodLabel: letter.periodLabel,
+        periodStart: letter.periodStart, createdAt: letter.createdAt,
+        ...(letter.entryCount !== undefined ? { entryCount: letter.entryCount } : {})
+      }),
+      onProgress: (progress) => broadcast('letters:fill-progress', progress)
+    })
+  })
 
   ipcMain.handle('letters:next-period', async (_event, timeframe: LetterTimeframe) => {
     if (!['week', 'month', 'year'].includes(timeframe)) throw new Error('Invalid letter timeframe')

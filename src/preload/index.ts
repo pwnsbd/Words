@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { JournalEntry, EntrySummary, MemoryMatch, PatternsSnapshot, Settings, ModelStatus, DownloadProgress, Letter, LetterSummary, LetterTimeframe } from '../shared/types'
+import type { JournalEntry, EntrySummary, MemoryMatch, PatternsSnapshot, Settings, ModelStatus, DownloadProgress, Letter, LetterSummary, LetterTimeframe, LetterFillProgress, LetterFillResult } from '../shared/types'
 
 const api = {
   listPatterns: (): Promise<PatternsSnapshot> => ipcRenderer.invoke('patterns:list'),
@@ -53,6 +53,17 @@ const api = {
     timeframe: LetterTimeframe
   ): Promise<{ label: string; start: string; end: string } | null> =>
     ipcRenderer.invoke('letters:next-period', timeframe),
+  fillMissingLetters: (): Promise<LetterFillResult> => ipcRenderer.invoke('letters:fill-missing'),
+  onLetterWritten: (callback: (letter: LetterSummary) => void): (() => void) => {
+    const listener = (_event: unknown, letter: LetterSummary): void => callback(letter)
+    ipcRenderer.on('letters:written', listener)
+    return () => ipcRenderer.removeListener('letters:written', listener)
+  },
+  onLetterFillProgress: (callback: (progress: LetterFillProgress) => void): (() => void) => {
+    const listener = (_event: unknown, progress: LetterFillProgress): void => callback(progress)
+    ipcRenderer.on('letters:fill-progress', listener)
+    return () => ipcRenderer.removeListener('letters:fill-progress', listener)
+  },
   listLetters: (timeframe?: LetterTimeframe): Promise<LetterSummary[]> =>
     ipcRenderer.invoke('letters:list', timeframe),
   regenerateLetter: (id: string): Promise<Letter | null> => ipcRenderer.invoke('letters:regenerate', id),

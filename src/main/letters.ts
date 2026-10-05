@@ -192,3 +192,67 @@ export function periodQualifies(
   if (inPeriod.length >= LETTER_YEAR_MIN) return true
   return new Set(inPeriod.map((t) => new Date(t).getMonth())).size >= LETTER_YEAR_MONTHS
 }
+
+// ---------- Auto-fill ----------
+// Opening Letters writes every eligible, uncovered period, oldest first.
+
+export interface LetterPlanItem { timeframe: LetterTimeframe; label: string; start: string; end: string }
+
+const TIMEFRAME_ORDER: LetterTimeframe[] = ['week', 'month', 'year']
+
+export function planMissingLetters(
+  reflectionDates: string[],
+  existing: { timeframe: LetterTimeframe; periodStart: string }[],
+  now: Date = new Date()
+): LetterPlanItem[] {
+  const covered = new Set(existing.map((l) => `${l.timeframe}|${l.periodStart}`))
+  const plan = new Map<string, LetterPlanItem>()
+  for (const timeframe of TIMEFRAME_ORDER) {
+    for (const date of reflectionDates) {
+      const p = computePeriod(new Date(date), timeframe)
+      const key = `${timeframe}|${p.start}`
+      if (plan.has(key) || covered.has(key)) continue
+      if (periodQualifies(timeframe, p.start, p.end, reflectionDates, now)) {
+        plan.set(key, { timeframe, label: p.label, start: p.start, end: p.end })
+      }
+    }
+  }
+  return [...plan.values()].sort((a, b) =>
+    a.start === b.start ? TIMEFRAME_ORDER.indexOf(a.timeframe) - TIMEFRAME_ORDER.indexOf(b.timeframe) : a.start.localeCompare(b.start))
+}
+
+export interface LetterFillResult { started: boolean; written: number; failed: number }
+
+let fillInFlight = false
+
+// One fill at a time; a second call while one runs does nothing. A letter that
+// fails is skipped so the rest still get written.
+export async function fillMissingLetters(deps: {
+  reflectionDates: () => Promise<string[]>
+  write: (item: LetterPlanItem) => Promise<{ content: string; entryCount: number } | null>
+  onWritten: (letter: Letter) => void
+  onProgress: (progress: { done: number; total: number; currentLabel: string }) => void
+  now?: Date
+}): Promise<LetterFillResult> {
+  if (fillInFlight) return { started: false, written: 0, failed: 0 }
+  fillInFlight = true
+  try {
+    const plan = planMissingLetters(await deps.reflectionDates(), await listLetters(), deps.now)
+    let written = 0
+    let failed = 0
+    for (const item of plan) {
+      deps.onProgress({ done: written + failed, total: plan.length, currentLabel: item.label })
+      try {
+        const result = await deps.write(item)
+        if (!result) { failed++; continue }
+        deps.onWritten(await saveLetter(item.timeframe, item.label, item.start, item.end, result.content, result.entryCount))
+        written++
+      } catch {
+        failed++
+      }
+    }
+    return { started: true, written, failed }
+  } finally {
+    fillInFlight = false
+  }
+}

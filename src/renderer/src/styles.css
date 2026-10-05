@@ -772,6 +772,11 @@ button {
   margin: 0;
 }
 
+.letters__status {
+  margin: 0;
+  padding-right: 1em;
+}
+
 .letters__layout-toggle {
   display: flex;
   gap: 0.5em;

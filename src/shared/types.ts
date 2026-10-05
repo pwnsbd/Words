@@ -110,6 +110,19 @@ export interface LetterSummary {
   createdAt: string
 }
 
+export interface LetterFillProgress {
+  done: number
+  total: number
+  currentLabel: string
+}
+
+export interface LetterFillResult {
+  started: boolean
+  written: number
+  failed: number
+  modelUnavailable?: boolean
+}
+
 export interface IdeaEvidence {
   entryId: string
   createdAt: string

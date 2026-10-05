@@ -93,6 +93,63 @@ try {
   const summary = (await letters.listLetters()).find((l) => l.id === oldId)
   assert.ok(summary && !('entryCount' in summary), 'old summary carries no count')
 
+  // Auto-fill: oldest first across timeframes, skips covered periods, no concurrent duplicates, survives a failure
+  const fixture2 = fs.mkdtempSync(path.join(os.tmpdir(), 'words-letters-fill-'))
+  try {
+    const fillLetters = load('src/main/letters.ts', {
+      electron: { app: { getPath: () => fixture2 } },
+      path, crypto, fs, './storageValidation': validation
+    })
+    // Weeks of Mar 1, Mar 8, Mar 15 2026 each have 2 entries; March has an entry in every week (5+ entries total).
+    const dates = [
+      at(2026, 3, 2), at(2026, 3, 3), at(2026, 3, 9), at(2026, 3, 10), at(2026, 3, 16), at(2026, 3, 17),
+      at(2026, 3, 23), at(2026, 3, 24), at(2026, 3, 30), at(2026, 3, 31)
+    ]
+    const plan = fillLetters.planMissingLetters(dates, [], now)
+    const starts = Array.from(plan, (p) => p.start)
+    assert.deepEqual(starts, [...starts].sort(), 'plan is oldest first')
+    assert.ok(plan.some((p) => p.timeframe === 'month') && plan.some((p) => p.timeframe === 'week'), 'plan spans timeframes')
+    assert.equal(plan.filter((p) => p.timeframe === 'year').length, 0, 'year 2026 not eligible')
+    const marchPeriod = period('month', 2026, 3, 10)
+    const covered = fillLetters.planMissingLetters(dates, [{ timeframe: 'month', periodStart: marchPeriod.start }], now)
+    assert.equal(covered.length, plan.length - 1, 'covered period skipped')
+    assert.ok(!covered.some((p) => p.timeframe === 'month'))
+
+    const written = []
+    const progress = []
+    let calls = 0
+    const deps = {
+      reflectionDates: async () => dates,
+      now,
+      write: async (item) => {
+        calls++
+        await new Promise((r) => setTimeout(r, 5))
+        if (calls === 2) throw new Error('model failed')
+        return { content: `Dear you (${item.label})`, entryCount: 2 }
+      },
+      onWritten: (l) => written.push(l),
+      onProgress: (p) => progress.push(p)
+    }
+    const [first, second] = await Promise.all([fillLetters.fillMissingLetters(deps), fillLetters.fillMissingLetters(deps)])
+    assert.equal(first.started, true)
+    assert.equal(second.started, false, 'second concurrent fill does not start')
+    assert.equal(first.failed, 1, 'one failure counted')
+    assert.equal(first.written, plan.length - 1, 'the rest keep going after a failure')
+    assert.equal(calls, plan.length, 'each period written once')
+    assert.deepEqual(Array.from(written, (l) => l.periodStart), Array.from(plan).filter((_, i) => i !== 1).map((p) => p.start), 'written oldest first')
+    assert.equal(progress[0].done, 0)
+    assert.equal(progress[0].total, plan.length)
+    assert.equal(progress[0].currentLabel, plan[0].label)
+
+    // "try again": only the failed one remains, and a clean run finishes everything
+    const retry = await fillLetters.fillMissingLetters({ ...deps, write: async () => ({ content: 'Dear you', entryCount: 2 }) })
+    assert.equal(retry.written, 1)
+    assert.equal(retry.failed, 0)
+    assert.equal((await fillLetters.fillMissingLetters(deps)).written, 0, 'nothing left to write')
+  } finally {
+    fs.rmSync(fixture2, { recursive: true, force: true })
+  }
+
   console.log('letters tests passed')
 } finally {
   fs.rmSync(fixture, { recursive: true, force: true })

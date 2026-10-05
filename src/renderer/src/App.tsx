@@ -12,7 +12,8 @@ import type {
   DownloadProgress,
   Letter,
   LetterSummary,
-  LetterTimeframe
+  LetterTimeframe,
+  LetterFillProgress
 } from '../../shared/types'
 import { parseRuns, serializeRuns } from '../../shared/textMarkup'
 import { DRAFT_KEY, readDraft } from './draft'
@@ -110,6 +111,10 @@ const LETTER_NEEDS: Record<LetterTimeframe, string> = {
   year: 'a yearly letter needs 12 entries in a finished year, or entries in 6 of its months'
 }
 
+// "Week of Jul 5, 2026" reads as "the week of Jul 5, 2026" in the status line.
+function fillLabel(label: string): string {
+  return label.startsWith('Week of') ? `the week of${label.slice(7)}` : /^\d{4}$/.test(label) ? `the year ${label}` : label
+}
 const CANDLE_COLOR: Record<LetterTimeframe, string> = {
   week: 'var(--mode-easy)',
   month: 'var(--mode-medium)',
@@ -268,7 +273,10 @@ export default function App(): JSX.Element {
   const [letters, setLetters] = useState<LetterSummary[]>([])
   const [letterTimeframe, setLetterTimeframe] = useState<LetterTimeframe>('month')
   const [letterLayout, setLetterLayout] = useState<'list' | 'grid'>('list')
-  const [letterGenerating, setLetterGenerating] = useState(false)
+  const [letterFill, setLetterFill] = useState<LetterFillProgress | null>(null)
+  const [lettersOpened, setLettersOpened] = useState(false)
+  const [letterFillFailed, setLetterFillFailed] = useState(false)
+  const [letterModelMissing, setLetterModelMissing] = useState(false)
   const [readLetter, setReadLetter] = useState<Letter | null>(null)
   const [letterDeleteConfirming, setLetterDeleteConfirming] = useState(false)
   const [letterRewriting, setLetterRewriting] = useState(false)
@@ -574,6 +582,19 @@ export default function App(): JSX.Element {
     return unsubscribe
   }, [])
 
+  // Letters written by the auto-fill appear as soon as they're saved, even if
+  // the page has been left or the candle turned meanwhile.
+  // Subscribed from the first time Letters is opened, and kept after that.
+  useEffect(() => {
+    if (!lettersOpened) return
+    const offWritten = window.api.onLetterWritten((letter) => {
+      setLetters((prev) => (prev.some((l) => l.id === letter.id) ? prev
+        : [...prev, letter].sort((a, b) => (a.periodStart < b.periodStart ? 1 : -1))))
+    })
+    const offProgress = window.api.onLetterFillProgress(setLetterFill)
+    return () => { offWritten(); offProgress() }
+  }, [lettersOpened])
+
   async function handleSave(): Promise<void> {
     if (saveInFlight.current || composing) return
     // Trim on the char array (not the serialized string) so a leading/
@@ -776,6 +797,8 @@ export default function App(): JSX.Element {
       }
       if (next === 'recap') {
         void window.api.listLetters().then(setLetters).catch(() => setActionError('Your letters could not be opened. Please retry.'))
+        setLettersOpened(true)
+        void fillMissingLetters()
       }
       if (next === 'read-letter' && entryId) {
         setReadLetter(null)
@@ -828,22 +851,20 @@ export default function App(): JSX.Element {
     } catch { setActionError('Import could not finish. Check the journal before retrying; some files may have been added.') }
   }
 
-  async function handleGenerateLetter(): Promise<void> {
-    if (letterGenerating) return
-    setLetterGenerating(true)
+  // Runs when Letters opens (and from "try again"). The main process writes
+  // every missing eligible letter oldest first; a second call while one runs
+  // does nothing, and progress arrives through the events below.
+  async function fillMissingLetters(): Promise<void> {
     try {
-      const period = await window.api.nextLetterPeriod(letterTimeframe)
-      if (!period) { setActionError(LETTER_NEEDS[letterTimeframe]); return }
-      const letter = await window.api.generateLetter(letterTimeframe, period.label, period.start, period.end)
-      if (letter) {
-        void window.api.listLetters().then(setLetters)
-        turnTo('read-letter', letter.id)
-      } else setActionError('A letter could not be written yet. Check Local models in Settings and try again.')
+      const result = await window.api.fillMissingLetters()
+      setLetterModelMissing(!!result.modelUnavailable)
+      if (result.started) setLetterFillFailed(result.failed > 0)
     } catch {
-      setActionError('The letter could not be generated. Please retry.')
+      setLetterFillFailed(true)
     } finally {
-      setLetterGenerating(false)
+      setLetterFill(null)
     }
+    void window.api.listLetters().then(setLetters).catch(() => {})
   }
 
   async function handleRewriteLetter(): Promise<void> {
@@ -1394,14 +1415,20 @@ export default function App(): JSX.Element {
 
             {/* Controls row: generate + layout toggle */}
             <div className="letters__controls">
-              <button
-                type="button"
-                className="journal__link letters__generate"
-                disabled={letterGenerating}
-                onClick={() => void handleGenerateLetter()}
-              >
-                {letterGenerating ? 'writing…' : `write a ${letterTimeframe === 'year' ? 'yearly' : letterTimeframe + 'ly'} letter`}
-              </button>
+              <p className="hint letters__status" role="status">
+                {letterFill ? (
+                  `writing ${fillLabel(letterFill.currentLabel)}… (${letterFill.done + 1} of ${letterFill.total})`
+                ) : letterModelMissing ? (
+                  'letters are written once the local model is ready. Check Local models in Settings.'
+                ) : letterFillFailed ? (
+                  <>
+                    some letters could not be written yet.{' '}
+                    <button type="button" className="journal__link letters__generate" onClick={() => void fillMissingLetters()}>
+                      try again
+                    </button>
+                  </>
+                ) : LETTER_NEEDS[letterTimeframe]}
+              </p>
 
               <div className="letters__layout-toggle">
                 <button
@@ -1437,7 +1464,7 @@ export default function App(): JSX.Element {
             {/* Letter listing */}
             {filteredLetters.length === 0 ? (
               <p className="journal__empty">
-                No {TIMEFRAME_LABEL[letterTimeframe]} letters yet. Write one and it will be kept here.
+                No {TIMEFRAME_LABEL[letterTimeframe]} letters yet.
               </p>
             ) : letterLayout === 'list' ? (
               <ul className="journal__list letters__list">
