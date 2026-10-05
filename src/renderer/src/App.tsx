@@ -252,12 +252,14 @@ export default function App(): JSX.Element {
   const [modelDirBusy, setModelDirBusy] = useState(false) // a models-folder move is running
   const [greeting] = useState(timeOfDayPhrase) // fixed for the session, not recomputed every render
   const editorRef = useRef<HTMLDivElement>(null)
+  const imeRef = useRef<HTMLTextAreaElement>(null)
+  const [composing, setComposing] = useState('') // in-progress IME text, shown at the caret
   const dialRef = useRef<HTMLDivElement>(null)
   const [dialRotation, setDialRotation] = useState(0)
   const [dialDragging, setDialDragging] = useState(false)
 
   useEffect(() => {
-    editorRef.current?.focus()
+    focusEditor()
   }, [])
 
   useEffect(() => {
@@ -430,7 +432,7 @@ export default function App(): JSX.Element {
       setChars([])
       setEntryCount((c) => c + 1)
       if (settings) setRemainingDeletes(budgetForMode(settings.writingMode, settings.quillDeleteLimit))
-      editorRef.current?.focus()
+      focusEditor()
     } finally {
       setSaving(false)
     }
@@ -455,9 +457,33 @@ export default function App(): JSX.Element {
   // removal once a mode's budget runs out. Every handled key is
   // preventDefault()'d before the browser can touch the DOM itself; only
   // `chars` (and therefore React's own render) ever changes what's shown.
-  // Trade-off: no native spellcheck/IME composition on this surface, since
-  // both need a real input/textarea/contenteditable element underneath.
-  function handleEditorKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
+  // IME / dead keys / the emoji panel need a real text input, so a visually
+  // hidden <textarea> (imeRef) sits at the caret and holds focus. Plain
+  // keys are still intercepted here and never reach it; anything the OS
+  // composes arrives through onInput / onCompositionEnd and is appended to
+  // `chars` as ordinary characters, so every writing mode's rules (which
+  // only ever look at `chars`) apply unchanged. The textarea is emptied
+  // after every commit, so native editing can never diverge from `chars`.
+  function focusEditor(): void {
+    imeRef.current?.focus()
+  }
+
+  function appendText(text: string): void {
+    if (!text) return
+    if (savedEntryId) beginNewEntry()
+    setChars((prev) => [...prev, ...Array.from(text).map((ch) => ({ ch, struck: false }))])
+  }
+
+  function commitIme(el: HTMLTextAreaElement): void {
+    const text = el.value.replace(/\r\n?/g, '\n')
+    el.value = ''
+    setComposing('')
+    appendText(text)
+  }
+
+  function handleEditorKeyDown(e: React.KeyboardEvent<HTMLElement>): void {
+    // Mid-composition keys (including Backspace) belong to the IME.
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault()
       void handleSave()
@@ -525,12 +551,9 @@ export default function App(): JSX.Element {
     }
   }
 
-  function handleEditorPaste(e: React.ClipboardEvent<HTMLDivElement>): void {
+  function handleEditorPaste(e: React.ClipboardEvent<HTMLElement>): void {
     e.preventDefault()
-    const text = e.clipboardData.getData('text/plain')
-    if (!text) return
-    if (savedEntryId) beginNewEntry()
-    setChars((prev) => [...prev, ...Array.from(text).map((ch) => ({ ch, struck: false }))])
+    appendText(e.clipboardData.getData('text/plain'))
   }
 
   useEffect(() => {
@@ -707,7 +730,7 @@ export default function App(): JSX.Element {
     setReflection(null)
     setResurfaced([])
     setSavedEntryId(null)
-    editorRef.current?.focus()
+    focusEditor()
   }
 
   return (
@@ -741,7 +764,10 @@ export default function App(): JSX.Element {
               aria-label="Write"
               onKeyDown={handleEditorKeyDown}
               onPaste={handleEditorPaste}
-              onFocus={() => setEditorFocused(true)}
+              onFocus={(e) => {
+                setEditorFocused(true)
+                if (e.target === e.currentTarget) focusEditor()
+              }}
               onBlur={() => setEditorFocused(false)}
             >
               {chars.length === 0 && (
@@ -756,7 +782,26 @@ export default function App(): JSX.Element {
                   <span key={i}>{run.text}</span>
                 )
               )}
-              {editorFocused && <span className="write__caret" aria-hidden="true" />}
+              {composing && <span className="write__composing">{composing}</span>}
+              <span className="write__caret-slot">
+                {editorFocused && <span className="write__caret" aria-hidden="true" />}
+                <textarea
+                  ref={imeRef}
+                  className="write__ime"
+                  tabIndex={-1}
+                  aria-label="Write"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  onCompositionStart={() => setComposing(' ')}
+                  onCompositionUpdate={(e) => setComposing(e.data || ' ')}
+                  onCompositionEnd={(e) => commitIme(e.currentTarget)}
+                  onInput={(e) => {
+                    if (e.nativeEvent instanceof InputEvent && e.nativeEvent.isComposing) return
+                    commitIme(e.currentTarget)
+                  }}
+                />
+              </span>
             </div>
 
             <div className="write__footer">

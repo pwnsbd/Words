@@ -188,6 +188,36 @@ button {
   animation: caretBlink 1000ms steps(1) infinite;
 }
 
+/* Composition text from an IME, shown at the caret until it is committed. */
+.write__composing {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* Hidden input that receives IME/emoji/dead-key text; sits at the caret so the
+   OS candidate window appears there. */
+.write__caret-slot {
+  position: relative;
+}
+
+.write__ime {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1.8em;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  opacity: 0;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  pointer-events: none;
+  caret-color: transparent;
+}
+
 @keyframes caretBlink {
   0%,
   49% {
