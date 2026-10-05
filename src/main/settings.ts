@@ -78,9 +78,9 @@ export function updateSettings(patch: Partial<Settings>): Settings {
   return next
 }
 
-// Friendly labels instead of a raw number in the settings UI. Values are a
-// starting guess, not empirically tuned — adjust here if "balanced" turns
-// out to feel over/under-eager in practice.
+// Friendly labels instead of a raw number in the settings UI. Values are
+// tuned with `npm run eval:mirror` (see docs/mirror-eval.md) on a small
+// synthetic set — re-run it before changing them.
 const RESURFACE_THRESHOLDS: Record<ResurfaceSensitivity, number> = {
   rare: 0.74,
   balanced: 0.68,
