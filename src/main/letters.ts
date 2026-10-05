@@ -178,13 +178,13 @@ export function periodQualifies(
   if (timeframe === 'week') return inPeriod.length >= LETTER_WEEK_MIN
   if (timeframe === 'month') {
     if (inPeriod.length >= LETTER_MONTH_MIN) return true
-    // An entry in every Sunday-to-Saturday week that overlaps the month.
+    // An in-month entry in every Sunday-to-Saturday week that overlaps the month.
     const first = new Date(startMs)
     const weekStart = new Date(first.getFullYear(), first.getMonth(), first.getDate() - first.getDay())
     while (weekStart.getTime() <= endMs) {
       const from = weekStart.getTime()
       const to = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7).getTime()
-      if (!times.some((t) => t >= from && t < to)) return false
+      if (!inPeriod.some((t) => t >= from && t < to)) return false
       weekStart.setDate(weekStart.getDate() + 7)
     }
     return true

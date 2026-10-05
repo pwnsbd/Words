@@ -50,8 +50,8 @@ try {
   const everyWeek = [at(2026, 3, 1), at(2026, 3, 9), at(2026, 3, 16), at(2026, 3, 23), at(2026, 3, 31)]
   assert.equal(q('month', march, everyWeek), true, 'month: an entry in every week (5 entries)')
   assert.equal(q('month', march, everyWeek.slice(0, 4)), false, 'month: last week empty')
-  assert.equal(q('month', march, [at(2026, 3, 1), at(2026, 3, 9), at(2026, 3, 16), at(2026, 3, 23), at(2026, 4, 2)]), true,
-    'month: the last overlapping week counts via its April days')
+  assert.equal(q('month', march, [at(2026, 3, 1), at(2026, 3, 9), at(2026, 3, 16), at(2026, 3, 23), at(2026, 4, 2)]), false,
+    'month: an April-only entry does not cover the last partial week')
   assert.equal(q('month', march, [at(2026, 3, 2), at(2026, 3, 3), at(2026, 3, 4), at(2026, 3, 5)]), false, 'month: 4 in one week')
   assert.equal(q('month', march, [at(2026, 3, 2), at(2026, 3, 3), at(2026, 3, 4), at(2026, 3, 5), at(2026, 3, 6)]), true, 'month: 5 entries branch')
   assert.equal(q('month', march, [at(2026, 2, 27), at(2026, 3, 9), at(2026, 3, 16), at(2026, 3, 23), at(2026, 3, 31)]), false,
