@@ -1396,6 +1396,12 @@ button {
 .letter-icon:hover { opacity: .95; }
 .letter-icon:hover svg { transform: translateY(-2px) rotate(-3deg); }
 .letter-icon:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 6px; }
+/* On charcoal the paper fill matches the background, so the letter vanished
+   into it — give it the scroll's candlelit parchment and a little more ink. */
+:root[data-theme='dark'] .letter-icon { opacity: .75; }
+:root[data-theme='dark'] .letter-icon__paper { fill: var(--parchment-a); }
+:root[data-theme='dark'] .patterns-icon { opacity: .75; }
+:root[data-theme='dark'] .patterns-icon circle { fill: var(--parchment-a); }
 
 /* A knotted thread, stacked above the notebook in the same quiet ink. */
 .patterns-icon { right: calc(6vw - 3px); bottom: calc(5vh + 58px); width: 32px; height: 40px; padding: 0; color: var(--ink-soft); opacity: .55; }
