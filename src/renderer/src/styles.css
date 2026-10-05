@@ -1786,3 +1786,27 @@ section[aria-label='Letter'] .read__actions { max-width: 880px; }
   .jgrid { animation: none; }
   .jgrid__card, .jgrid__fold { transition: none; }
 }
+
+/* ---------- Page dock (letters / patterns / journal marks) ---------- */
+
+/* Covers the positioned page without catching clicks; sits outside the
+   scroll container so the marks never scroll with content. The icons keep
+   their own .corner / .letter-icon / .patterns-icon positions. */
+.page-dock {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.page-dock > .corner { pointer-events: auto; }
+
+/* The page you're on: same spot, dimmed, inert (no hover effects). */
+.page-dock > .dock-icon--here,
+:root[data-theme='dark'] .page-dock > .dock-icon--here {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Keep journal-style content clear of the dock at the 640px minimum. */
+.journal { padding-right: max(14vw, calc(6vw + 56px)); }

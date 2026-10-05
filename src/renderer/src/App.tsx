@@ -20,6 +20,7 @@ import { DRAFT_KEY, readDraft } from './draft'
 import { DeleteControl } from './DeleteMark'
 import { InkScroll } from './InkScroll'
 import { JournalGrid } from './JournalGrid'
+import { PageDock } from './PageDock'
 import { Knot, RopeTimeline, SagRope } from './Rope'
 import {
   loadSpellcheck,
@@ -1139,41 +1140,14 @@ export default function App(): JSX.Element {
               )}
             </div>
 
-            {entryCount >= RECAP_MIN_ENTRIES && (
-              <button type="button" className="corner letter-icon" onClick={() => turnTo('recap')}
-                aria-label="A letter from the past" title="A letter from the past">
-                <svg viewBox="0 0 34 42" fill="none" aria-hidden="true">
-                  {/* A folded letter — slightly irregular edges like hand-torn
-                      parchment, with a small wax seal holding it closed. */}
-                  <path d="M5 3 C6 2 27 1.5 29 3 C30 4 30.5 14 30 20 C29.5 26 30 34 29 38 C28 39.5 7 40 5 38 C3.5 36.5 3.5 10 5 3Z"
-                    stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" className="letter-icon__paper" />
-                  <path d="M8 13 C10 12.8 22 13 24 13" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" opacity="0.35" />
-                  <path d="M8 18 C11 17.7 20 17.8 23 18" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" opacity="0.3" />
-                  <path d="M8 23 C10 22.8 17 22.7 19 23" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" opacity="0.25" />
-                  <circle cx="17" cy="32" r="4" className="letter-icon__seal" />
-                </svg>
-              </button>
-            )}
-
-            <button type="button" className="corner patterns-icon" onClick={() => turnTo('patterns')}
-              aria-label="Open patterns" title="Patterns">
-              <svg viewBox="0 0 40 46" fill="none" aria-hidden="true">
-                <path d="M12 41C4 31 33 29 27 18S9 13 14 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                <circle cx="14" cy="8" r="3" /><circle cx="25" cy="23" r="3" /><circle cx="12" cy="37" r="3" />
-              </svg>
-            </button>
-
-            <button
-              type="button"
-              className={`corner corner--journal notebook-icon ${journalIconActive ? 'notebook-icon--active' : ''}`}
-              onClick={handleOpenJournal}
-              aria-label="Open your journal"
-              title="Your journal"
-            >
-              <span className="notebook-icon__spine" aria-hidden="true" />
-              <span className="notebook-icon__body" aria-hidden="true" />
-              <span className="notebook-icon__pen" aria-hidden="true" />
-            </button>
+            <PageDock
+              current="write"
+              showLetter={entryCount >= RECAP_MIN_ENTRIES}
+              journalActive={journalIconActive}
+              onOpenLetters={() => turnTo('recap')}
+              onOpenPatterns={() => turnTo('patterns')}
+              onOpenJournal={handleOpenJournal}
+            />
 
             <button
               type="button"
@@ -1231,53 +1205,63 @@ export default function App(): JSX.Element {
             </div>
           </section>
         ) : view === 'patterns' ? (
-          <InkScroll as="section" className="journal patterns" aria-label="Patterns">
-            <button type="button" className="corner corner--write" onClick={() => turnTo('write')}
-              aria-label="Back to writing" title="Back to writing">‹</button>
-            <p className="patterns__eyebrow">Threads through your writing</p>
-            <h1 className="journal__title">Patterns</h1>
-            <p className="patterns__intro">Ideas, philosophical questions, and ways of thinking that return in your writing.</p>
-            <div role="status" className="patterns__status">
-              {patternsError ? 'Patterns could not be loaded. Please try again.' : patterns?.message ||
-                (patterns?.updating ? 'Looking for threads in your writing…' : !patterns ? 'Opening your patterns…' : '')}
-            </div>
-            {(patternsError || patterns?.message) && <button className="journal__link" onClick={() => {
-              setPatternsError(false)
-              void window.api.refreshPatterns().catch(() => setPatternsError(true))
-            }}>try again</button>}
-            {patterns && !patterns.updating && !patterns.message && !patternsError && patterns.patterns.length === 0 && (
-              <p className="journal__empty">Patterns will appear as you keep writing. A thread needs to return in at least three entries on different days.</p>
-            )}
-            {patterns?.patterns.map(pattern => (
-              <article className="pattern" key={pattern.id}>
-                <SagRope />
-                <button type="button" className="pattern__heading" aria-expanded={expandedPattern === pattern.id}
-                  aria-controls={`pattern-${pattern.id}`} onClick={() => setExpandedPattern(expandedPattern === pattern.id ? null : pattern.id)}>
-                  <Knot />
-                  <span>{pattern.title}</span><span className="pattern__toggle" aria-hidden="true">{expandedPattern === pattern.id ? '−' : '+'}</span>
-                </button>
-                <p className="pattern__dates">Appeared in {pattern.evidence.length} entries · {formatDate(pattern.evidence[0].createdAt)} – {formatDate(pattern.evidence[pattern.evidence.length - 1].createdAt)}</p>
-                <p className="pattern__description">{pattern.description}</p>
-                {expandedPattern === pattern.id && (
-                  <div id={`pattern-${pattern.id}`}>
-                    <RopeTimeline>
-                      {pattern.evidence.map(evidence => (
-                        <li key={evidence.entryId}>
-                          <button className="journal__link" onClick={() => {
-                            setSourcePassage(evidence.text)
-                            turnTo('read', evidence.entryId)
-                          }}>{formatDate(evidence.createdAt)}{evidence.isSample ? ' · sample' : ''} — open entry</button>
-                          <blockquote>{evidence.text}</blockquote>
-                        </li>
-                      ))}
-                    </RopeTimeline>
-                    <button className="journal__link pattern__dismiss" disabled={dismissBusy !== null}
-                      onClick={() => void dismissIdea(pattern.id)}>{dismissBusy === pattern.id ? 'setting this aside…' : 'these aren’t related'}</button>
-                  </div>
-                )}
-              </article>
-            ))}
-          </InkScroll>
+          <>
+            <InkScroll as="section" className="journal patterns" aria-label="Patterns">
+              <button type="button" className="corner corner--write" onClick={() => turnTo('write')}
+                aria-label="Back to writing" title="Back to writing">‹</button>
+              <p className="patterns__eyebrow">Threads through your writing</p>
+              <h1 className="journal__title">Patterns</h1>
+              <p className="patterns__intro">Ideas, philosophical questions, and ways of thinking that return in your writing.</p>
+              <div role="status" className="patterns__status">
+                {patternsError ? 'Patterns could not be loaded. Please try again.' : patterns?.message ||
+                  (patterns?.updating ? 'Looking for threads in your writing…' : !patterns ? 'Opening your patterns…' : '')}
+              </div>
+              {(patternsError || patterns?.message) && <button className="journal__link" onClick={() => {
+                setPatternsError(false)
+                void window.api.refreshPatterns().catch(() => setPatternsError(true))
+              }}>try again</button>}
+              {patterns && !patterns.updating && !patterns.message && !patternsError && patterns.patterns.length === 0 && (
+                <p className="journal__empty">Patterns will appear as you keep writing. A thread needs to return in at least three entries on different days.</p>
+              )}
+              {patterns?.patterns.map(pattern => (
+                <article className="pattern" key={pattern.id}>
+                  <SagRope />
+                  <button type="button" className="pattern__heading" aria-expanded={expandedPattern === pattern.id}
+                    aria-controls={`pattern-${pattern.id}`} onClick={() => setExpandedPattern(expandedPattern === pattern.id ? null : pattern.id)}>
+                    <Knot />
+                    <span>{pattern.title}</span><span className="pattern__toggle" aria-hidden="true">{expandedPattern === pattern.id ? '−' : '+'}</span>
+                  </button>
+                  <p className="pattern__dates">Appeared in {pattern.evidence.length} entries · {formatDate(pattern.evidence[0].createdAt)} – {formatDate(pattern.evidence[pattern.evidence.length - 1].createdAt)}</p>
+                  <p className="pattern__description">{pattern.description}</p>
+                  {expandedPattern === pattern.id && (
+                    <div id={`pattern-${pattern.id}`}>
+                      <RopeTimeline>
+                        {pattern.evidence.map(evidence => (
+                          <li key={evidence.entryId}>
+                            <button className="journal__link" onClick={() => {
+                              setSourcePassage(evidence.text)
+                              turnTo('read', evidence.entryId)
+                            }}>{formatDate(evidence.createdAt)}{evidence.isSample ? ' · sample' : ''} — open entry</button>
+                            <blockquote>{evidence.text}</blockquote>
+                          </li>
+                        ))}
+                      </RopeTimeline>
+                      <button className="journal__link pattern__dismiss" disabled={dismissBusy !== null}
+                        onClick={() => void dismissIdea(pattern.id)}>{dismissBusy === pattern.id ? 'setting this aside…' : 'these aren’t related'}</button>
+                    </div>
+                  )}
+                </article>
+              ))}
+            </InkScroll>
+            <PageDock
+              current="patterns"
+              showLetter={entryCount >= RECAP_MIN_ENTRIES}
+              journalActive={journalIconActive}
+              onOpenLetters={() => turnTo('recap')}
+              onOpenPatterns={() => turnTo('patterns')}
+              onOpenJournal={handleOpenJournal}
+            />
+          </>
         ) : view === 'read' ? (
           <InkScroll as="section" className="read" aria-label="Entry">
             <button
@@ -1359,165 +1343,175 @@ export default function App(): JSX.Element {
             )}
           </InkScroll>
         ) : view === 'recap' ? (
-          <InkScroll as="section" className="journal recap" aria-label="Letters">
-            <button
-              type="button"
-              className="corner corner--write"
-              onClick={() => turnTo(recapOrigin)}
-              aria-label={recapOrigin === 'journal' ? 'Back to journal' : 'Back to writing'}
-              title={recapOrigin === 'journal' ? 'Back to journal' : 'Back to writing'}
-            >
-              ‹
-            </button>
+          <>
+            <InkScroll as="section" className="journal recap" aria-label="Letters">
+              <button
+                type="button"
+                className="corner corner--write"
+                onClick={() => turnTo(recapOrigin)}
+                aria-label={recapOrigin === 'journal' ? 'Back to journal' : 'Back to writing'}
+                title={recapOrigin === 'journal' ? 'Back to journal' : 'Back to writing'}
+              >
+                ‹
+              </button>
 
-            <p className="patterns__eyebrow">From your writing</p>
-            <div className="letters__header">
-              <h1 className="journal__title">Letters</h1>
-              <div className="letters__candles" role="tablist" aria-label="Timeframe">
-              {TIMEFRAMES.map((tf) => {
-                const { h: bodyH, w: bodyW } = CANDLE_BODY[tf]
-                const color = CANDLE_COLOR[tf]
-                const lit = letterTimeframe === tf
-                const viewH = bodyH + 30
-                const bodyBot = viewH - 5
-                const bodyTop = bodyBot - bodyH
-                const bx = 18 - bodyW / 2
-                const wickTop = bodyTop - 5
-                return (
-                  <button
-                    key={tf}
-                    type="button"
-                    role="tab"
-                    aria-selected={lit}
-                    className={`letters__candle ${lit ? 'letters__candle--lit' : ''}`}
-                    onClick={() => setLetterTimeframe(tf)}
-                    aria-label={TIMEFRAME_LABEL[tf]}
-                    title={TIMEFRAME_LABEL[tf]}
-                  >
-                    <svg viewBox={`0 0 36 ${viewH}`} fill="none" aria-hidden="true">
-                      <rect x={bx} y={bodyTop} width={bodyW} height={bodyH} rx="2"
-                        style={{ fill: color, opacity: lit ? 0.9 : 0.4, transition: 'opacity 300ms ease' }} />
-                      {tf !== 'week' && (
-                        <path d={`M${bx} ${bodyTop + 12} C${bx - 2.5} ${bodyTop + 14.5} ${bx - 2.5} ${bodyTop + 17.5} ${bx} ${bodyTop + 20}`}
-                          style={{ fill: color, opacity: lit ? 0.7 : 0.25, transition: 'opacity 300ms ease' }} />
-                      )}
-                      {tf === 'year' && (
-                        <path d={`M${bx + bodyW} ${bodyTop + 30} C${bx + bodyW + 2.5} ${bodyTop + 32.5} ${bx + bodyW + 2.5} ${bodyTop + 35.5} ${bx + bodyW} ${bodyTop + 38}`}
-                          style={{ fill: color, opacity: lit ? 0.7 : 0.25, transition: 'opacity 300ms ease' }} />
-                      )}
-                      <line x1={18} y1={bodyTop} x2={18} y2={wickTop}
-                        strokeWidth="1" strokeLinecap="round"
-                        style={{ stroke: 'var(--ink-soft)' }} />
-                      {lit && (
-                        <g className="letters__flame">
-                          <circle cx={18} cy={10} r="14" style={{ fill: color, opacity: 0.08 }} />
-                          <path d="M18 20 C13.5 15 13.5 7 18 0 C22.5 7 22.5 15 18 20Z" style={{ fill: color, opacity: 0.8 }} />
-                          <path d="M18 18 C15.5 14 15.5 9 18 4 C20.5 9 20.5 14 18 18Z" style={{ fill: 'var(--paper)', opacity: 0.55 }} />
-                          <circle cx={18} cy={wickTop} r="1.5" style={{ fill: color, opacity: 0.9 }} />
-                        </g>
-                      )}
-                    </svg>
-                    <span className="letters__candle-label">{TIMEFRAME_LABEL[tf]}</span>
-                  </button>
-                )
-              })}
-            </div>
-            </div>
-
-            {/* Controls row: generate + layout toggle */}
-            <div className="letters__controls">
-              <p className="hint letters__status" role="status">
-                {letterFill ? (
-                  `writing ${fillLabel(letterFill.currentLabel)}… (${letterFill.done + 1} of ${letterFill.total})`
-                ) : letterModelMissing ? (
-                  'letters are written once the local model is ready. Check Local models in Settings.'
-                ) : letterFillFailed ? (
-                  <>
-                    some letters could not be written yet.{' '}
-                    <button type="button" className="journal__link letters__generate" onClick={() => void fillMissingLetters()}>
-                      try again
-                    </button>
-                  </>
-                ) : LETTER_NEEDS[letterTimeframe]}
-              </p>
-
-              <div className="letters__layout-toggle">
-                <button
-                  type="button"
-                  className={`letters__layout-btn ${letterLayout === 'list' ? 'letters__layout-btn--active' : ''}`}
-                  onClick={() => setLetterLayout('list')}
-                  aria-label="List view"
-                  title="List view"
-                >
-                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <line x1="1" y1="3" x2="15" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <line x1="1" y1="13" x2="15" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className={`letters__layout-btn ${letterLayout === 'grid' ? 'letters__layout-btn--active' : ''}`}
-                  onClick={() => setLetterLayout('grid')}
-                  aria-label="Grid view"
-                  title="Grid view"
-                >
-                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                    <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                    <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                    <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Letter listing */}
-            {filteredLetters.length === 0 ? (
-              <p className="journal__empty">
-                No {TIMEFRAME_LABEL[letterTimeframe]} letters yet.
-              </p>
-            ) : letterLayout === 'list' ? (
-              <ul className="journal__list letters__list">
-                {filteredLetters.map((letter) => (
-                  <li key={letter.id} className="journal__entry">
+              <p className="patterns__eyebrow">From your writing</p>
+              <div className="letters__header">
+                <h1 className="journal__title">Letters</h1>
+                <div className="letters__candles" role="tablist" aria-label="Timeframe">
+                {TIMEFRAMES.map((tf) => {
+                  const { h: bodyH, w: bodyW } = CANDLE_BODY[tf]
+                  const color = CANDLE_COLOR[tf]
+                  const lit = letterTimeframe === tf
+                  const viewH = bodyH + 30
+                  const bodyBot = viewH - 5
+                  const bodyTop = bodyBot - bodyH
+                  const bx = 18 - bodyW / 2
+                  const wickTop = bodyTop - 5
+                  return (
                     <button
+                      key={tf}
                       type="button"
-                      className="journal__entry-button"
+                      role="tab"
+                      aria-selected={lit}
+                      className={`letters__candle ${lit ? 'letters__candle--lit' : ''}`}
+                      onClick={() => setLetterTimeframe(tf)}
+                      aria-label={TIMEFRAME_LABEL[tf]}
+                      title={TIMEFRAME_LABEL[tf]}
+                    >
+                      <svg viewBox={`0 0 36 ${viewH}`} fill="none" aria-hidden="true">
+                        <rect x={bx} y={bodyTop} width={bodyW} height={bodyH} rx="2"
+                          style={{ fill: color, opacity: lit ? 0.9 : 0.4, transition: 'opacity 300ms ease' }} />
+                        {tf !== 'week' && (
+                          <path d={`M${bx} ${bodyTop + 12} C${bx - 2.5} ${bodyTop + 14.5} ${bx - 2.5} ${bodyTop + 17.5} ${bx} ${bodyTop + 20}`}
+                            style={{ fill: color, opacity: lit ? 0.7 : 0.25, transition: 'opacity 300ms ease' }} />
+                        )}
+                        {tf === 'year' && (
+                          <path d={`M${bx + bodyW} ${bodyTop + 30} C${bx + bodyW + 2.5} ${bodyTop + 32.5} ${bx + bodyW + 2.5} ${bodyTop + 35.5} ${bx + bodyW} ${bodyTop + 38}`}
+                            style={{ fill: color, opacity: lit ? 0.7 : 0.25, transition: 'opacity 300ms ease' }} />
+                        )}
+                        <line x1={18} y1={bodyTop} x2={18} y2={wickTop}
+                          strokeWidth="1" strokeLinecap="round"
+                          style={{ stroke: 'var(--ink-soft)' }} />
+                        {lit && (
+                          <g className="letters__flame">
+                            <circle cx={18} cy={10} r="14" style={{ fill: color, opacity: 0.08 }} />
+                            <path d="M18 20 C13.5 15 13.5 7 18 0 C22.5 7 22.5 15 18 20Z" style={{ fill: color, opacity: 0.8 }} />
+                            <path d="M18 18 C15.5 14 15.5 9 18 4 C20.5 9 20.5 14 18 18Z" style={{ fill: 'var(--paper)', opacity: 0.55 }} />
+                            <circle cx={18} cy={wickTop} r="1.5" style={{ fill: color, opacity: 0.9 }} />
+                          </g>
+                        )}
+                      </svg>
+                      <span className="letters__candle-label">{TIMEFRAME_LABEL[tf]}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              </div>
+
+              {/* Controls row: generate + layout toggle */}
+              <div className="letters__controls">
+                <p className="hint letters__status" role="status">
+                  {letterFill ? (
+                    `writing ${fillLabel(letterFill.currentLabel)}… (${letterFill.done + 1} of ${letterFill.total})`
+                  ) : letterModelMissing ? (
+                    'letters are written once the local model is ready. Check Local models in Settings.'
+                  ) : letterFillFailed ? (
+                    <>
+                      some letters could not be written yet.{' '}
+                      <button type="button" className="journal__link letters__generate" onClick={() => void fillMissingLetters()}>
+                        try again
+                      </button>
+                    </>
+                  ) : LETTER_NEEDS[letterTimeframe]}
+                </p>
+
+                <div className="letters__layout-toggle">
+                  <button
+                    type="button"
+                    className={`letters__layout-btn ${letterLayout === 'list' ? 'letters__layout-btn--active' : ''}`}
+                    onClick={() => setLetterLayout('list')}
+                    aria-label="List view"
+                    title="List view"
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <line x1="1" y1="3" x2="15" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <line x1="1" y1="13" x2="15" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className={`letters__layout-btn ${letterLayout === 'grid' ? 'letters__layout-btn--active' : ''}`}
+                    onClick={() => setLetterLayout('grid')}
+                    aria-label="Grid view"
+                    title="Grid view"
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                      <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                      <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                      <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Letter listing */}
+              {filteredLetters.length === 0 ? (
+                <p className="journal__empty">
+                  No {TIMEFRAME_LABEL[letterTimeframe]} letters yet.
+                </p>
+              ) : letterLayout === 'list' ? (
+                <ul className="journal__list letters__list">
+                  {filteredLetters.map((letter) => (
+                    <li key={letter.id} className="journal__entry">
+                      <button
+                        type="button"
+                        className="journal__entry-button"
+                        onClick={() => turnTo('read-letter', letter.id)}
+                      >
+                        <span className="journal__date">
+                          <span className={`letters__timeframe-dot letters__timeframe-dot--${letter.timeframe}`} aria-hidden="true" />
+                          {letter.periodLabel}
+                        </span>
+                        <span className="journal__preview letters__written-on">
+                          written {formatDate(letter.createdAt)}
+                          {letter.entryCount !== undefined && ` · from ${letter.entryCount} ${letter.entryCount === 1 ? 'entry' : 'entries'}`}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="letters__grid">
+                  {filteredLetters.map((letter) => (
+                    <button
+                      key={letter.id}
+                      type="button"
+                      className="letters__card"
                       onClick={() => turnTo('read-letter', letter.id)}
                     >
-                      <span className="journal__date">
-                        <span className={`letters__timeframe-dot letters__timeframe-dot--${letter.timeframe}`} aria-hidden="true" />
-                        {letter.periodLabel}
-                      </span>
-                      <span className="journal__preview letters__written-on">
-                        written {formatDate(letter.createdAt)}
-                        {letter.entryCount !== undefined && ` · from ${letter.entryCount} ${letter.entryCount === 1 ? 'entry' : 'entries'}`}
-                      </span>
+                      <span className={`letters__timeframe-dot letters__timeframe-dot--${letter.timeframe}`} aria-hidden="true" />
+                      <span className="letters__card-period">{letter.periodLabel}</span>
+                      <span className="letters__card-date">{formatDate(letter.createdAt)}</span>
+                      {letter.entryCount !== undefined && (
+                        <span className="letters__card-date">from {letter.entryCount} {letter.entryCount === 1 ? 'entry' : 'entries'}</span>
+                      )}
                     </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="letters__grid">
-                {filteredLetters.map((letter) => (
-                  <button
-                    key={letter.id}
-                    type="button"
-                    className="letters__card"
-                    onClick={() => turnTo('read-letter', letter.id)}
-                  >
-                    <span className={`letters__timeframe-dot letters__timeframe-dot--${letter.timeframe}`} aria-hidden="true" />
-                    <span className="letters__card-period">{letter.periodLabel}</span>
-                    <span className="letters__card-date">{formatDate(letter.createdAt)}</span>
-                    {letter.entryCount !== undefined && (
-                      <span className="letters__card-date">from {letter.entryCount} {letter.entryCount === 1 ? 'entry' : 'entries'}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </InkScroll>
+                  ))}
+                </div>
+              )}
+            </InkScroll>
+            <PageDock
+              current="recap"
+              showLetter={entryCount >= RECAP_MIN_ENTRIES}
+              journalActive={journalIconActive}
+              onOpenLetters={() => turnTo('recap')}
+              onOpenPatterns={() => turnTo('patterns')}
+              onOpenJournal={handleOpenJournal}
+            />
+          </>
         ) : view === 'read-letter' ? (
           <InkScroll as="section" className="read" aria-label="Letter">
             <button
@@ -1785,125 +1779,135 @@ export default function App(): JSX.Element {
             </div>
           </InkScroll>
         ) : (
-          <InkScroll as="section" className="journal" aria-label="Journal">
-            <button
-              type="button"
-              className="corner corner--write"
-              onClick={() => turnTo('write')}
-              aria-label="Back to writing"
-              title="Back to writing"
-            >
-              ‹
-            </button>
-
-            <div className="journal__top-right">
+          <>
+            <InkScroll as="section" className="journal" aria-label="Journal">
               <button
                 type="button"
-                className="journal__import-btn"
-                onClick={() => void handleImport()}
-                aria-label="Import old writing"
-                title="Import old writing"
+                className="corner corner--write"
+                onClick={() => turnTo('write')}
+                aria-label="Back to writing"
+                title="Back to writing"
               >
-                <span className="journal__import-icon" aria-hidden="true">
-                  ↓
-                </span>
-                import
+                ‹
               </button>
-              <button
-                type="button"
-                className="journal__gear"
-                onClick={() => turnTo('settings')}
-                aria-label="Settings"
-                title="Settings"
-              >
-                ⚙
-              </button>
-            </div>
 
-            <h1 className="journal__title">Your journal</h1>
+              <div className="journal__top-right">
+                <button
+                  type="button"
+                  className="journal__import-btn"
+                  onClick={() => void handleImport()}
+                  aria-label="Import old writing"
+                  title="Import old writing"
+                >
+                  <span className="journal__import-icon" aria-hidden="true">
+                    ↓
+                  </span>
+                  import
+                </button>
+                <button
+                  type="button"
+                  className="journal__gear"
+                  onClick={() => turnTo('settings')}
+                  aria-label="Settings"
+                  title="Settings"
+                >
+                  ⚙
+                </button>
+              </div>
 
-            {importStatus && <p className="journal__import-status">{importStatus}</p>}
+              <h1 className="journal__title">Your journal</h1>
 
-            {theme && <p className="journal__theme">{theme}</p>}
+              {importStatus && <p className="journal__import-status">{importStatus}</p>}
 
-            {entries && entries.length >= RECAP_MIN_ENTRIES && (
-              <button type="button" className="journal__link" onClick={() => turnTo('recap')}>
-                your letters
-              </button>
-            )}
+              {theme && <p className="journal__theme">{theme}</p>}
 
-            {entries === null ? (
-              <p className="journal__empty"> </p>
-            ) : entries.length === 0 ? (
-              <p className="journal__empty">Nothing written yet. It'll gather here quietly, over time.</p>
-            ) : (
-              <>
-                <div className="journal__view-toggle">
-                  <div className="letters__layout-toggle">
-                    <button
-                      type="button"
-                      className={`letters__layout-btn ${journalView === 'list' ? 'letters__layout-btn--active' : ''}`}
-                      onClick={() => void chooseJournalView('list')}
-                      aria-label="List view"
-                      title="List view"
-                    >
-                      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                        <line x1="1" y1="3" x2="15" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        <line x1="1" y1="13" x2="15" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      className={`letters__layout-btn ${journalView === 'grid' ? 'letters__layout-btn--active' : ''}`}
-                      onClick={() => void chooseJournalView('grid')}
-                      aria-label="Grid view"
-                      title="Grid view"
-                    >
-                      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                        <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                        <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                        <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                        <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
-                      </svg>
-                    </button>
+              {entries && entries.length >= RECAP_MIN_ENTRIES && (
+                <button type="button" className="journal__link" onClick={() => turnTo('recap')}>
+                  your letters
+                </button>
+              )}
+
+              {entries === null ? (
+                <p className="journal__empty"> </p>
+              ) : entries.length === 0 ? (
+                <p className="journal__empty">Nothing written yet. It'll gather here quietly, over time.</p>
+              ) : (
+                <>
+                  <div className="journal__view-toggle">
+                    <div className="letters__layout-toggle">
+                      <button
+                        type="button"
+                        className={`letters__layout-btn ${journalView === 'list' ? 'letters__layout-btn--active' : ''}`}
+                        onClick={() => void chooseJournalView('list')}
+                        aria-label="List view"
+                        title="List view"
+                      >
+                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <line x1="1" y1="3" x2="15" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          <line x1="1" y1="13" x2="15" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className={`letters__layout-btn ${journalView === 'grid' ? 'letters__layout-btn--active' : ''}`}
+                        onClick={() => void chooseJournalView('grid')}
+                        aria-label="Grid view"
+                        title="Grid view"
+                      >
+                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                          <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                          <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                          <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
-                {journalView === 'grid' ? (
-                  <JournalGrid
-                    entries={entries}
-                    onOpen={(id) => turnTo('read', id)}
-                    formatDate={formatDate}
-                    moodOpacity={moodMarkOpacity}
-                  />
-                ) : (
-              <ul className="journal__list">
-                {entries.map((entry) => (
-                  <li key={entry.id} className="journal__entry">
-                    <button
-                      type="button"
-                      className="journal__entry-button"
-                      onClick={() => turnTo('read', entry.id)}
-                    >
-                      <span className="journal__date">
-                        {entry.mood !== undefined && (
-                          <span
-                            className="journal__mood"
-                            style={{ opacity: moodMarkOpacity(entry.mood) }}
-                            aria-hidden="true"
-                          />
-                        )}
-                        {formatDate(entry.createdAt)}{entry.isSample ? ' · sample' : ''}
-                      </span>
-                      <span className="journal__preview">{entry.preview}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-                )}
-              </>
-            )}
-          </InkScroll>
+                  {journalView === 'grid' ? (
+                    <JournalGrid
+                      entries={entries}
+                      onOpen={(id) => turnTo('read', id)}
+                      formatDate={formatDate}
+                      moodOpacity={moodMarkOpacity}
+                    />
+                  ) : (
+                <ul className="journal__list">
+                  {entries.map((entry) => (
+                    <li key={entry.id} className="journal__entry">
+                      <button
+                        type="button"
+                        className="journal__entry-button"
+                        onClick={() => turnTo('read', entry.id)}
+                      >
+                        <span className="journal__date">
+                          {entry.mood !== undefined && (
+                            <span
+                              className="journal__mood"
+                              style={{ opacity: moodMarkOpacity(entry.mood) }}
+                              aria-hidden="true"
+                            />
+                          )}
+                          {formatDate(entry.createdAt)}{entry.isSample ? ' · sample' : ''}
+                        </span>
+                        <span className="journal__preview">{entry.preview}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                  )}
+                </>
+              )}
+            </InkScroll>
+            <PageDock
+              current="journal"
+              showLetter={entryCount >= RECAP_MIN_ENTRIES}
+              journalActive={journalIconActive}
+              onOpenLetters={() => turnTo('recap')}
+              onOpenPatterns={() => turnTo('patterns')}
+              onOpenJournal={handleOpenJournal}
+            />
+          </>
         )}
       </div>
     </div>
