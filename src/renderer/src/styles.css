@@ -319,6 +319,14 @@ button {
   animation: fadeIn 900ms ease-out;
 }
 
+.memory-hint {
+  margin: 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink-soft);
+  animation: fadeIn 900ms ease-out;
+}
+
 /* Arrives a beat after the reflection, like a second, quieter thought —
    never competing with it, and only shown when something genuinely echoes. */
 .resurfaced {

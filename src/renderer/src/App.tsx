@@ -231,6 +231,9 @@ export default function App(): JSX.Element {
   const [savedEntryId, setSavedEntryId] = useState<string | null>(null)
   const [reflection, setReflection] = useState<string | null>(null)
   const [resurfaced, setResurfaced] = useState<MemoryMatch[]>([])
+  // True once the post-save memory lookup has actually reported back, so an
+  // empty result is known to be empty rather than still loading.
+  const [resurfacedDone, setResurfacedDone] = useState(false)
   const [readMemories, setReadMemories] = useState<MemoryMatch[]>([])
   const [memoryStatus, setMemoryStatus] = useState('')
   const [memoryBusy, setMemoryBusy] = useState(false)
@@ -407,7 +410,10 @@ export default function App(): JSX.Element {
 
   useEffect(() => {
     const unsubscribe = window.api.onResurfaced(({ id, matches }) => {
-      if (id === savedEntryId) setResurfaced(matches)
+      if (id === savedEntryId) {
+        setResurfaced(matches)
+        setResurfacedDone(true)
+      }
     })
     return unsubscribe
   }, [savedEntryId])
@@ -452,6 +458,7 @@ export default function App(): JSX.Element {
     setActionError(null)
     setReflection(null)
     setResurfaced([])
+    setResurfacedDone(false)
     try {
       const entry = await window.api.saveEntry(serializeRuns(trimmed))
       setSavedEntryId(entry.id)
@@ -781,9 +788,14 @@ export default function App(): JSX.Element {
   const downloadFailed = downloadValues.some((p) => p?.error)
   const showModelSetupLine = modelsMissing && !downloadFailed
 
+  // A new writer's first saves find nothing to resurface; say so once, quietly.
+  const showMemoryHint = savedEntryId !== null && resurfacedDone && resurfaced.length === 0 &&
+    entryCount < 5 && modelStatus?.embeddingModelFound === true
+
   function beginNewEntry(): void {
     setReflection(null)
     setResurfaced([])
+    setResurfacedDone(false)
     setSavedEntryId(null)
     focusEditor()
   }
@@ -867,9 +879,12 @@ export default function App(): JSX.Element {
             </div>
 
             <div className="write__footer">
-              {reflection || resurfaced.length > 0 ? (
+              {reflection || resurfaced.length > 0 || showMemoryHint ? (
                 <div className="afterthought" key={savedEntryId}>
                   {reflection && <p className="reflection">{reflection}</p>}
+                  {showMemoryHint && (
+                    <p className="memory-hint">Words will start remembering after a few entries.</p>
+                  )}
                   {resurfaced.map((match) => (
                     <div className="resurfaced" key={match.id}>
                       <button type="button" className="journal__link" onClick={() => {
