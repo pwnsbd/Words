@@ -1598,3 +1598,11 @@ button {
   .ink-scroll__thumb,
   .ink-scroll__thumb[data-moving='true'] { filter: none; transition: none; }
 }
+
+/* Charcoal: letters sit on dark parchment, where --ink-faint and italic
+   --ink-soft read too dim — lift each one step. */
+:root[data-theme='dark'] .recap__letter { color: var(--ink); }
+:root[data-theme='dark'] .letters__card-date,
+:root[data-theme='dark'] .letters__count,
+:root[data-theme='dark'] .recap .hint,
+:root[data-theme='dark'] .recap__status { color: var(--ink-soft); }
