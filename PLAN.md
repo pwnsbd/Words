@@ -23,6 +23,7 @@
 | T6 | README rewrite around the mirror + GH Pages showcase + demo | Conductor drafts, builder builds | README.md, docs/index.html | user approves | after T5 |
 | T7 | docs/release-readiness.md + fresh-account install test | Conductor + user | docs/ | install test passes | last |
 | T8 | Tag v0.2.0, GitHub Release with installer | user confirms | — | release live | last |
+| T9 | Handwriting fonts: 3 per writing mode, chosen in Settings, stored per entry | builder | see docs/contracts/handwriting.md | contract done-check + user visual check | in progress |
 
 ## Cleanup left for the user
 - Delete stray `--help` (SQLite file), `.memory-smoke-*` dirs and `*.log` at repo root (now git-ignored).
