@@ -1617,4 +1617,4 @@ button {
    column (scroll + toolbar together so the icons stay on the scroll's edge). */
 section[aria-label='Letter'] .scroll,
 section[aria-label='Letter'] .read__toolbar,
-section[aria-label='Letter'] .read__actions { max-width: 780px; }
+section[aria-label='Letter'] .read__actions { max-width: 880px; }
