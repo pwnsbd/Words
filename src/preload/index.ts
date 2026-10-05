@@ -10,6 +10,8 @@ const api = {
   listEntries: (): Promise<EntrySummary[]> => ipcRenderer.invoke('entries:list'),
   getEntry: (id: string): Promise<JournalEntry | null> => ipcRenderer.invoke('entries:get', id),
   deleteEntry: (id: string): Promise<void> => ipcRenderer.invoke('entries:delete', id),
+  regenerateReflection: (id: string): Promise<JournalEntry | null> =>
+    ipcRenderer.invoke('entries:regenerateReflection', id),
   onReflection: (callback: (payload: { id: string; reflection: string }) => void): (() => void) => {
     const listener = (_event: unknown, payload: { id: string; reflection: string }): void =>
       callback(payload)

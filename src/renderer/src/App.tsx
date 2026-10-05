@@ -238,6 +238,7 @@ export default function App(): JSX.Element {
   const [theme, setTheme] = useState<string | null>(null)
   const [readEntry, setReadEntry] = useState<JournalEntry | null>(null)
   const [deleteConfirming, setDeleteConfirming] = useState(false)
+  const [listeningAgain, setListeningAgain] = useState(false)
   const [letters, setLetters] = useState<LetterSummary[]>([])
   const [letterTimeframe, setLetterTimeframe] = useState<LetterTimeframe>('month')
   const [letterLayout, setLetterLayout] = useState<'list' | 'grid'>('list')
@@ -679,6 +680,17 @@ export default function App(): JSX.Element {
     }
   }
 
+  const handleListenAgain = async (): Promise<void> => {
+    if (!readEntry || listeningAgain) return
+    setListeningAgain(true)
+    try {
+      const updated = await window.api.regenerateReflection(readEntry.id)
+      if (updated) setReadEntry((cur) => (cur && cur.id === updated.id ? updated : cur))
+    } finally {
+      setListeningAgain(false)
+    }
+  }
+
   const modelsMissing = modelStatus !== null && ((modelStatus.reflectionEnabled && !modelStatus.reflectionModelFound) || !modelStatus.embeddingModelFound)
 
   // The app fetches the models by itself in the background on first run.
@@ -977,9 +989,21 @@ export default function App(): JSX.Element {
                       </button>
                     </>
                   ) : (
-                    <button type="button" className="journal__link" onClick={() => setDeleteConfirming(true)}>
-                      delete
-                    </button>
+                    <>
+                      {modelStatus?.reflectionEnabled && modelStatus.reflectionModelFound && (
+                        <button
+                          type="button"
+                          className="journal__link"
+                          disabled={listeningAgain}
+                          onClick={() => void handleListenAgain()}
+                        >
+                          {listeningAgain ? 'listening…' : 'listen again'}
+                        </button>
+                      )}
+                      <button type="button" className="journal__link" onClick={() => setDeleteConfirming(true)}>
+                        delete
+                      </button>
+                    </>
                   )}
                 </div>
               </>

@@ -220,6 +220,36 @@ app.whenReady().then(() => {
     return entry
   })
 
+  // Listen again: re-run the reflection (and mood mark) for a saved entry.
+  // The text never changes. If the model is off, missing, or fails, the
+  // previous reflection stays and this resolves null. A second call while
+  // one is already running for the same entry is ignored.
+  const regenerating = new Set<string>()
+  ipcMain.handle('entries:regenerateReflection', async (event, id: string) => {
+    const status = describeModelStatus()
+    if (!status.reflectionEnabled || !status.reflectionModelFound) return null
+    if (regenerating.has(id)) return null
+    regenerating.add(id)
+    try {
+      return await modelJob(async () => {
+        const entry = await getEntry(id)
+        if (!entry) return null
+        const reflected = await reflect(stripStruckMarkup(entry.text))
+        if (!reflected) return null
+        await updateEntry(id, reflected)
+        if (!event.sender.isDestroyed()) {
+          event.sender.send('entries:reflection', { id, reflection: reflected.reflection })
+        }
+        return await getEntry(id)
+      })
+    } catch (err) {
+      console.error('[words] regenerate reflection failed:', err)
+      return null
+    } finally {
+      regenerating.delete(id)
+    }
+  })
+
   ipcMain.handle('entries:memories', (_event, id: string) => modelJob(() => findMemories(id)))
   ipcMain.handle('memory:rebuild', () => modelJob(async () => {
     const result = await rebuildMemory(true)
