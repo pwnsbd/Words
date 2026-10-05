@@ -8,7 +8,8 @@
 import { app } from 'electron'
 import { join, isAbsolute } from 'path'
 import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'fs'
-import type { Settings, ResurfaceSensitivity } from '../shared/types'
+import { HANDWRITING_FONTS, DEFAULT_HANDWRITING } from '../shared/types'
+import type { Settings, ResurfaceSensitivity, WritingMode, HandwritingFont } from '../shared/types'
 
 export type { Settings }
 
@@ -18,6 +19,7 @@ const DEFAULT_SETTINGS: Settings = {
   theme: 'light',
   resurfaceSensitivity: 'balanced',
   writingMode: 'pencil',
+  handwriting: { ...DEFAULT_HANDWRITING },
   quillDeleteLimit: 5,
   journalView: 'list',
   modelsDir: null,
@@ -46,6 +48,19 @@ function validatedPatch(value: unknown): Partial<Settings> {
     if (!['pencil', 'quill', 'ink'].includes(patch.writingMode)) throw new Error('Invalid writing mode')
     result.writingMode = patch.writingMode
   }
+  if (patch.handwriting !== undefined) {
+    const hw = patch.handwriting as unknown
+    if (!hw || typeof hw !== 'object' || Array.isArray(hw)) throw new Error('Invalid handwriting font')
+    const next: Partial<Record<WritingMode, HandwritingFont>> = {}
+    for (const [mode, id] of Object.entries(hw)) {
+      const font = HANDWRITING_FONTS[id as HandwritingFont]
+      if (!['pencil', 'quill', 'ink'].includes(mode) || !Object.prototype.hasOwnProperty.call(HANDWRITING_FONTS, id) || font.mode !== mode) {
+        throw new Error('Invalid handwriting font')
+      }
+      next[mode as WritingMode] = id as HandwritingFont
+    }
+    result.handwriting = next as Settings['handwriting']
+  }
   if (patch.quillDeleteLimit !== undefined) {
     if (!Number.isSafeInteger(patch.quillDeleteLimit) || patch.quillDeleteLimit < 0) throw new Error('Invalid deletion limit')
     result.quillDeleteLimit = patch.quillDeleteLimit
@@ -66,16 +81,19 @@ export function getSettings(): Settings {
   try {
     const raw = readFileSync(settingsPath(), 'utf-8')
     cached = { ...DEFAULT_SETTINGS, ...validatedPatch(JSON.parse(raw)),
+      handwriting: { ...DEFAULT_HANDWRITING, ...validatedPatch(JSON.parse(raw)).handwriting },
       reflectionModel: 'existing', embeddingModel: 'qwen' }
   } catch {
     // No settings file yet, or it's unreadable — fall back to defaults.
-    cached = { ...DEFAULT_SETTINGS }
+    cached = { ...DEFAULT_SETTINGS, handwriting: { ...DEFAULT_HANDWRITING } }
   }
   return cached
 }
 
 export function updateSettings(patch: Partial<Settings>): Settings {
-  const next: Settings = { ...getSettings(), ...validatedPatch(patch), reflectionModel: 'existing', embeddingModel: 'qwen' }
+  const validated = validatedPatch(patch)
+  const next: Settings = { ...getSettings(), ...validated,
+    handwriting: { ...getSettings().handwriting, ...validated.handwriting }, reflectionModel: 'existing', embeddingModel: 'qwen' }
   mkdirSync(app.getPath('userData'), { recursive: true })
   writeFileSync(settingsPath() + '.tmp', JSON.stringify(next, null, 2), 'utf-8')
   renameSync(settingsPath() + '.tmp', settingsPath())

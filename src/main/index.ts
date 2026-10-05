@@ -32,7 +32,7 @@ import {
   saveLetter, listLetters, getLetter, deleteLetter, replaceLetterContent,
   computePeriod, periodQualifies, fillMissingLetters
 } from './letters'
-import type { LetterTimeframe } from '../shared/types'
+import type { LetterTimeframe, HandwritingFont } from '../shared/types'
 import { listPatterns, dismissPattern, refreshPatterns, invalidatePatternsForEntry } from './patterns'
 import { modelJob, findMemories, rebuildMemory, getEchoes, invalidateEchoes, onEchoesReady, listCardTexts } from './memory'
 import { downloadMissingModels } from './modelDownload'
@@ -184,8 +184,8 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.handle('entries:save', async (event, text: string) => {
-    const entry = await saveEntry(text)
+  ipcMain.handle('entries:save', async (event, text: string, font?: string) => {
+    const entry = await saveEntry(text, font as HandwritingFont | undefined)
     invalidateEchoes()
 
     // Reflect + embed in the background. The writer never waits on this —

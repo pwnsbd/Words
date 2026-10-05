@@ -8,9 +8,8 @@ import { app } from 'electron'
 import { join } from 'path'
 import { promises as fs } from 'fs'
 import { randomUUID } from 'crypto'
-import type { JournalEntry, EntrySummary } from '../shared/types'
-
-
+import { isHandwritingFont } from '../shared/types'
+import type { JournalEntry, EntrySummary, HandwritingFont } from '../shared/types'
 import { stripStruckMarkup } from '../shared/textMarkup'
 import { assertStorageId, assertEntryText, isValidDate } from './storageValidation'
 
@@ -58,7 +57,7 @@ export async function loadAllEntries(): Promise<JournalEntry[]> {
   return entries.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) // newest first
 }
 
-export async function saveEntry(text: string): Promise<JournalEntry> {
+export async function saveEntry(text: string, font?: HandwritingFont): Promise<JournalEntry> {
   assertEntryText(text)
   await ensureDir()
   const entry: JournalEntry = {
@@ -66,6 +65,7 @@ export async function saveEntry(text: string): Promise<JournalEntry> {
     createdAt: new Date().toISOString(),
     text
   }
+  if (isHandwritingFont(font)) entry.font = font
   await writeEntry(entry)
   return entry
 }

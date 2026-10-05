@@ -89,6 +89,8 @@ Analysis upgrades re-check older results while preserving dismissals. Results an
   link sits below it in the reading view, needing a second click ("yes, delete" — no native confirm dialog,
   but still a deliberate two-step) to actually remove it. Deliberate: knowing a saved entry can't be quietly
   revised afterward is meant to make the moment of writing it a little more considered.
+- **Handwriting fonts**: each writing mode offers three bundled handwriting fonts (pencil, quill, ink); pick one per
+  mode in Settings → Handwriting. An entry keeps the font it was written in.
 - **Writing mode**: an actual rotary dial, top-right of the writing surface — drag it around like a watch
   crown (or focus it and use the arrow keys) to turn between three modes — **pencil** (unlimited edits,
   ordinary character-by-character backspace, with Ctrl+Backspace / Alt+Backspace to drop the whole

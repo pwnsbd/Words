@@ -68,6 +68,15 @@ https://www.apache.org/licenses/LICENSE-2.0
 | Font | Files | License |
 |---|---|---|
 | Lora (Cyreal) | `src/renderer/src/assets/fonts/Lora-Regular.woff2`, `Lora-Italic.woff2` | SIL Open Font License 1.1 |
+| Caveat | `src/renderer/src/assets/fonts/caveat-latin-400-normal.woff2` | SIL Open Font License 1.1 |
+| Gochi Hand | `src/renderer/src/assets/fonts/gochi-hand-latin-400-normal.woff2` | SIL Open Font License 1.1 |
+| Indie Flower | `src/renderer/src/assets/fonts/indie-flower-latin-400-normal.woff2` | SIL Open Font License 1.1 |
+| Dancing Script | `src/renderer/src/assets/fonts/dancing-script-latin-400-normal.woff2` | SIL Open Font License 1.1 |
+| Cormorant Garamond Italic | `src/renderer/src/assets/fonts/cormorant-garamond-latin-400-italic.woff2` | SIL Open Font License 1.1 |
+| Parisienne | `src/renderer/src/assets/fonts/parisienne-latin-400-normal.woff2` | SIL Open Font License 1.1 |
+| Kalam | `src/renderer/src/assets/fonts/kalam-latin-400-normal.woff2` | SIL Open Font License 1.1 |
+| Special Elite | `src/renderer/src/assets/fonts/special-elite-latin-400-normal.woff2` | Apache License 2.0 (per @fontsource metadata) |
+| Courier Prime | `src/renderer/src/assets/fonts/courier-prime-latin-400-normal.woff2` | SIL Open Font License 1.1 |
 
 Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic).
 The OFL 1.1 text is at https://openfontlicense.org. The font is self-hosted

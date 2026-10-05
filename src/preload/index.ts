@@ -1,12 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { JournalEntry, EntrySummary, EntryEcho, EntryCardText, MemoryMatch, PatternsSnapshot, Settings, ModelStatus, DownloadProgress, Letter, LetterSummary, LetterTimeframe, LetterFillProgress, LetterFillResult } from '../shared/types'
+import type { HandwritingFont, JournalEntry, EntrySummary, EntryEcho, EntryCardText, MemoryMatch, PatternsSnapshot, Settings, ModelStatus, DownloadProgress, Letter, LetterSummary, LetterTimeframe, LetterFillProgress, LetterFillResult } from '../shared/types'
 
 const api = {
   listPatterns: (): Promise<PatternsSnapshot> => ipcRenderer.invoke('patterns:list'),
   refreshPatterns: (): Promise<void> => ipcRenderer.invoke('patterns:refresh'),
   dismissPattern: (id: string): Promise<PatternsSnapshot> => ipcRenderer.invoke('patterns:dismiss', id),
-  saveEntry: (text: string): Promise<JournalEntry> => ipcRenderer.invoke('entries:save', text),
+  saveEntry: (text: string, font?: HandwritingFont): Promise<JournalEntry> => ipcRenderer.invoke('entries:save', text, font),
   listEntries: (): Promise<EntrySummary[]> => ipcRenderer.invoke('entries:list'),
   getEntryEchoes: (): Promise<Record<string, EntryEcho>> => ipcRenderer.invoke('entries:echoes'),
   getEntryCardTexts: (): Promise<EntryCardText[]> => ipcRenderer.invoke('entries:card-texts'),

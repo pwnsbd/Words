@@ -15,6 +15,8 @@ import type {
   LetterTimeframe,
   LetterFillProgress
 } from '../../shared/types'
+import { HANDWRITING_FONTS, DEFAULT_HANDWRITING } from '../../shared/types'
+import type { HandwritingFont } from '../../shared/types'
 import { parseRuns, serializeRuns } from '../../shared/textMarkup'
 import { DRAFT_KEY, readDraft } from './draft'
 import { DeleteControl } from './DeleteMark'
@@ -41,6 +43,15 @@ const RESURFACE_SENSITIVITY_OPTIONS: { value: ResurfaceSensitivity; label: strin
   { value: 'balanced', label: 'sometimes' },
   { value: 'often', label: 'often' }
 ]
+
+// Inline style for text set in a handwriting font: the font's family (falling
+// back to Lora if it fails to load) and its scale applied to a base size.
+// An unknown id yields no style, so the text stays in Lora.
+function handwritingStyle(font: HandwritingFont | undefined, basePx: number): React.CSSProperties | undefined {
+  const hw = font && Object.prototype.hasOwnProperty.call(HANDWRITING_FONTS, font) ? HANDWRITING_FONTS[font] : null
+  if (!hw) return undefined
+  return { fontFamily: `'${hw.family}', var(--serif)`, fontSize: `${Math.round(basePx * hw.scale * 10) / 10}px` }
+}
 
 const WRITING_MODE_ORDER: WritingMode[] = ['pencil', 'quill', 'ink']
 
@@ -552,6 +563,8 @@ export default function App(): JSX.Element {
     if (!existing.includes(word)) void applySettings({ spellcheckWords: [...existing, word] })
   }
 
+  const activeMode = settings?.writingMode ?? 'pencil'
+  const activeFont: HandwritingFont = settings?.handwriting?.[activeMode] ?? DEFAULT_HANDWRITING[activeMode]
   const plainDraft = useMemo(() => chars.map((c) => c.ch).join(''), [chars])
 
   useEffect(() => {
@@ -626,7 +639,7 @@ export default function App(): JSX.Element {
     setResurfaced([])
     setResurfacedDone(false)
     try {
-      const entry = await window.api.saveEntry(serializeRuns(trimmed))
+      const entry = await window.api.saveEntry(serializeRuns(trimmed), activeFont)
       setSavedEntryId(entry.id)
       setChars([])
       setEntryCount((c) => c + 1)
@@ -1013,6 +1026,7 @@ export default function App(): JSX.Element {
             <InkScroll
               innerRef={editorRef}
               className="write__editor"
+              style={handwritingStyle(activeFont, 22)}
               tabIndex={0}
               role="textbox"
               aria-multiline="true"
@@ -1297,7 +1311,7 @@ export default function App(): JSX.Element {
                     )}
                     {formatDate(readEntry.createdAt)}{readEntry.isSample ? ' · sample' : ''}
                   </div>
-                  <p className="read__text">
+                  <p className="read__text" style={handwritingStyle(readEntry.font, 20)}>
                     {parseRuns(readEntry.text).map((run, i) =>
                       run.struck ? (
                         <s key={i} className="struck-run">
@@ -1664,6 +1678,32 @@ export default function App(): JSX.Element {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="settings__group">
+              <h2 className="settings__label">Handwriting</h2>
+              {WRITING_MODE_ORDER.map((mode) => (
+                <div key={mode} className="settings__hw-row">
+                  <span className="settings__hw-mode">{mode}</span>
+                  <div className="settings__options">
+                    {(Object.keys(HANDWRITING_FONTS) as HandwritingFont[])
+                      .filter((id) => HANDWRITING_FONTS[id].mode === mode)
+                      .map((id) => (
+                        <button
+                          key={id}
+                          type="button"
+                          className={`settings__option settings__option--font ${
+                            (settings?.handwriting?.[mode] ?? DEFAULT_HANDWRITING[mode]) === id ? 'settings__option--active' : ''
+                          }`}
+                          style={{ fontFamily: `'${HANDWRITING_FONTS[id].family}', var(--serif)` }}
+                          onClick={() => void applySettings({ handwriting: { [mode]: id } as Settings['handwriting'] })}
+                        >
+                          {HANDWRITING_FONTS[id].label}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="settings__group">

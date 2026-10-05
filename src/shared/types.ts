@@ -13,6 +13,9 @@ export interface JournalEntry {
   mood?: number
   embedding?: number[]
   memory?: MemoryEmbedding
+  // Handwriting font the entry was written in. Absent on old entries,
+  // imports and samples, which read in the default serif.
+  font?: HandwritingFont
 }
 
 export interface MemoryEmbedding {
@@ -64,12 +67,44 @@ export type ResurfaceSensitivity = 'rare' | 'balanced' | 'often'
 //    rather than disappearing.
 export type WritingMode = 'pencil' | 'quill' | 'ink'
 
+export type HandwritingFont =
+  | 'caveat' | 'gochi-hand' | 'indie-flower'
+  | 'dancing-script' | 'cormorant-italic' | 'parisienne'
+  | 'kalam' | 'special-elite' | 'courier-prime'
+
+// One table for every handwriting font. `scale` multiplies the writing
+// surface's base font-size so all nine read at a similar visual size. The
+// first font listed for each mode is that mode's default.
+export const HANDWRITING_FONTS: Record<HandwritingFont, { mode: WritingMode; family: string; scale: number; label: string }> = {
+  'caveat': { mode: 'pencil', family: 'Caveat', scale: 1.25, label: 'Caveat' },
+  'gochi-hand': { mode: 'pencil', family: 'Gochi Hand', scale: 1.1, label: 'Gochi Hand' },
+  'indie-flower': { mode: 'pencil', family: 'Indie Flower', scale: 1.1, label: 'Indie Flower' },
+  'dancing-script': { mode: 'quill', family: 'Dancing Script', scale: 1.2, label: 'Dancing Script' },
+  'cormorant-italic': { mode: 'quill', family: 'Cormorant Garamond Italic', scale: 1.15, label: 'Cormorant' },
+  'parisienne': { mode: 'quill', family: 'Parisienne', scale: 1.3, label: 'Parisienne' },
+  'kalam': { mode: 'ink', family: 'Kalam', scale: 1.0, label: 'Kalam' },
+  'special-elite': { mode: 'ink', family: 'Special Elite', scale: 0.95, label: 'Special Elite' },
+  'courier-prime': { mode: 'ink', family: 'Courier Prime', scale: 0.95, label: 'Courier Prime' }
+}
+
+export const DEFAULT_HANDWRITING: Record<WritingMode, HandwritingFont> = {
+  pencil: 'caveat',
+  quill: 'dancing-script',
+  ink: 'kalam'
+}
+
+export function isHandwritingFont(id: unknown): id is HandwritingFont {
+  return typeof id === 'string' && Object.prototype.hasOwnProperty.call(HANDWRITING_FONTS, id)
+}
+
 export interface Settings {
   reflectionModel: 'existing'
   embeddingModel: 'qwen'
   theme: Theme
   resurfaceSensitivity: ResurfaceSensitivity
   writingMode: WritingMode
+  // The font chosen for each writing mode (Settings → Handwriting).
+  handwriting: Record<WritingMode, HandwritingFont>
   quillDeleteLimit: number
   journalView: 'list' | 'grid'
   // Folder the app looks in for the two GGUF model files. null = the

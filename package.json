@@ -20,6 +20,7 @@
     "test:patterns": "node scripts/test-patterns.mjs",
     "test:backend": "node scripts/test-backend.mjs",
     "test:letters": "node scripts/test-letters.mjs",
+    "test:handwriting": "node scripts/test-handwriting.mjs",
     "test:release": "npm run build && electron scripts/smoke-release.mjs",
     "test:philosophy": "node scripts/verify-philosophy.mjs"
   },

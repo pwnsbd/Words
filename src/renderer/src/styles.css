@@ -18,6 +18,80 @@
   src: url('./assets/fonts/Lora-Italic.woff2') format('woff2');
 }
 
+/* Handwriting fonts, one set per writing mode (see HANDWRITING_FONTS in
+   src/shared/types.ts). Same self-hosting as Lora; latin subset, weight 400. */
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/caveat-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Gochi Hand';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/gochi-hand-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Indie Flower';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/indie-flower-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Dancing Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/dancing-script-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond Italic';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/cormorant-garamond-latin-400-italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Parisienne';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/parisienne-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Kalam';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/kalam-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Special Elite';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/special-elite-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Courier Prime';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/courier-prime-latin-400-normal.woff2') format('woff2');
+}
+
 /* Two themes: "cream" (default) and "charcoal" — chosen in Settings, applied
    by setting data-theme on <html>. Every color in this file is one of these
    variables specifically so a theme switch just works everywhere at once;
@@ -1068,6 +1142,24 @@ button {
   border-color: var(--ink-soft);
   color: var(--ink);
   background: var(--paper-dim);
+}
+
+.settings__hw-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  flex-wrap: wrap;
+  margin-bottom: 0.9em;
+}
+
+.settings__hw-mode {
+  width: 4.5em;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.settings__option--font {
+  font-size: 18px;
 }
 
 .settings__number {
