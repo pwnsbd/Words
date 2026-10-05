@@ -10,6 +10,7 @@ Thumbs.db
 
 .memory-smoke-*/
 .release-smoke-*/
+.mirror-eval-*/
 
 # local tooling
 .claude/

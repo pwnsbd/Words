@@ -1,0 +1,481 @@
+{
+  "generatedAt": "2026-10-05T03:42:55.300Z",
+  "model": "Qwen3-Embedding-0.6B-Q8_0.gguf",
+  "corpus": {
+    "entries": 78,
+    "synthetic": 58,
+    "sample": 20,
+    "ideaGroups": 15,
+    "hardNegatives": 28,
+    "relatedPairs": 60,
+    "unrelatedPairs": 2926
+  },
+  "scoreDistribution": {
+    "relatedBestPassagePair": {
+      "min": 0.4767,
+      "median": 0.7043,
+      "max": 0.863
+    },
+    "unrelatedBestPassagePairTop5": [
+      {
+        "later": "fill-7",
+        "earlier": "mood-1",
+        "score": 0.6521
+      },
+      {
+        "later": "mood-4",
+        "earlier": "fill-3",
+        "score": 0.6302
+      },
+      {
+        "later": "sleep-3",
+        "earlier": "fill-3",
+        "score": 0.6165
+      },
+      {
+        "later": "neg-sleep-2",
+        "earlier": "sleep-2",
+        "score": 0.6139
+      },
+      {
+        "later": "sample-19",
+        "earlier": "fill-4",
+        "score": 0.6014
+      }
+    ]
+  },
+  "current": {
+    "rare": 0.8,
+    "balanced": 0.68,
+    "often": 0.64
+  },
+  "recommended": {
+    "rare": 0.74,
+    "balanced": 0.68,
+    "often": 0.61
+  },
+  "sensitivities": {
+    "rare": {
+      "current": {
+        "threshold": 0.8,
+        "surfaced": 4,
+        "precision": 1,
+        "recall": 0.06666666666666667,
+        "hardNegativeFpRate": 0,
+        "zeroMatchShare": 0.9487179487179487,
+        "zeroMatchShareWhereRelatedExists": 0.8857142857142857
+      },
+      "recommended": {
+        "threshold": 0.74,
+        "surfaced": 18,
+        "precision": 1,
+        "recall": 0.3,
+        "hardNegativeFpRate": 0,
+        "zeroMatchShare": 0.8333333333333334,
+        "zeroMatchShareWhereRelatedExists": 0.6285714285714286
+      }
+    },
+    "balanced": {
+      "current": {
+        "threshold": 0.68,
+        "surfaced": 36,
+        "precision": 1,
+        "recall": 0.6,
+        "hardNegativeFpRate": 0,
+        "zeroMatchShare": 0.6923076923076923,
+        "zeroMatchShareWhereRelatedExists": 0.3142857142857143
+      },
+      "recommended": {
+        "threshold": 0.68,
+        "surfaced": 36,
+        "precision": 1,
+        "recall": 0.6,
+        "hardNegativeFpRate": 0,
+        "zeroMatchShare": 0.6923076923076923,
+        "zeroMatchShareWhereRelatedExists": 0.3142857142857143
+      }
+    },
+    "often": {
+      "current": {
+        "threshold": 0.64,
+        "surfaced": 43,
+        "precision": 0.9767441860465116,
+        "recall": 0.7,
+        "hardNegativeFpRate": 0.03571428571428571,
+        "zeroMatchShare": 0.6282051282051282,
+        "zeroMatchShareWhereRelatedExists": 0.2
+      },
+      "recommended": {
+        "threshold": 0.61,
+        "surfaced": 54,
+        "precision": 0.9259259259259259,
+        "recall": 0.8333333333333334,
+        "hardNegativeFpRate": 0.10714285714285714,
+        "zeroMatchShare": 0.5512820512820513,
+        "zeroMatchShareWhereRelatedExists": 0.08571428571428572
+      }
+    }
+  },
+  "sweep": [
+    {
+      "threshold": 0.55,
+      "surfaced": 84,
+      "precision": 0.6904761904761905,
+      "recall": 0.9666666666666667,
+      "hardNegativeFpRate": 0.42857142857142855,
+      "zeroMatchShare": 0.38461538461538464,
+      "zeroMatchShareWhereRelatedExists": 0
+    },
+    {
+      "threshold": 0.56,
+      "surfaced": 76,
+      "precision": 0.75,
+      "recall": 0.95,
+      "hardNegativeFpRate": 0.32142857142857145,
+      "zeroMatchShare": 0.44871794871794873,
+      "zeroMatchShareWhereRelatedExists": 0.02857142857142857
+    },
+    {
+      "threshold": 0.57,
+      "surfaced": 71,
+      "precision": 0.8028169014084507,
+      "recall": 0.95,
+      "hardNegativeFpRate": 0.21428571428571427,
+      "zeroMatchShare": 0.48717948717948717,
+      "zeroMatchShareWhereRelatedExists": 0.02857142857142857
+    },
+    {
+      "threshold": 0.58,
+      "surfaced": 63,
+      "precision": 0.8412698412698413,
+      "recall": 0.8833333333333333,
+      "hardNegativeFpRate": 0.21428571428571427,
+      "zeroMatchShare": 0.5128205128205128,
+      "zeroMatchShareWhereRelatedExists": 0.08571428571428572
+    },
+    {
+      "threshold": 0.59,
+      "surfaced": 58,
+      "precision": 0.896551724137931,
+      "recall": 0.8666666666666667,
+      "hardNegativeFpRate": 0.14285714285714285,
+      "zeroMatchShare": 0.5384615384615384,
+      "zeroMatchShareWhereRelatedExists": 0.08571428571428572
+    },
+    {
+      "threshold": 0.6,
+      "surfaced": 56,
+      "precision": 0.9107142857142857,
+      "recall": 0.85,
+      "hardNegativeFpRate": 0.14285714285714285,
+      "zeroMatchShare": 0.5384615384615384,
+      "zeroMatchShareWhereRelatedExists": 0.08571428571428572
+    },
+    {
+      "threshold": 0.61,
+      "surfaced": 54,
+      "precision": 0.9259259259259259,
+      "recall": 0.8333333333333334,
+      "hardNegativeFpRate": 0.10714285714285714,
+      "zeroMatchShare": 0.5512820512820513,
+      "zeroMatchShareWhereRelatedExists": 0.08571428571428572
+    },
+    {
+      "threshold": 0.62,
+      "surfaced": 49,
+      "precision": 0.9591836734693877,
+      "recall": 0.7833333333333333,
+      "hardNegativeFpRate": 0.07142857142857142,
+      "zeroMatchShare": 0.5897435897435898,
+      "zeroMatchShareWhereRelatedExists": 0.14285714285714285
+    },
+    {
+      "threshold": 0.63,
+      "surfaced": 45,
+      "precision": 0.9555555555555556,
+      "recall": 0.7166666666666667,
+      "hardNegativeFpRate": 0.07142857142857142,
+      "zeroMatchShare": 0.6025641025641025,
+      "zeroMatchShareWhereRelatedExists": 0.17142857142857143
+    },
+    {
+      "threshold": 0.64,
+      "surfaced": 43,
+      "precision": 0.9767441860465116,
+      "recall": 0.7,
+      "hardNegativeFpRate": 0.03571428571428571,
+      "zeroMatchShare": 0.6282051282051282,
+      "zeroMatchShareWhereRelatedExists": 0.2
+    },
+    {
+      "threshold": 0.65,
+      "surfaced": 43,
+      "precision": 0.9767441860465116,
+      "recall": 0.7,
+      "hardNegativeFpRate": 0.03571428571428571,
+      "zeroMatchShare": 0.6282051282051282,
+      "zeroMatchShareWhereRelatedExists": 0.2
+    },
+    {
+      "threshold": 0.66,
+      "surfaced": 39,
+      "precision": 1,
+      "recall": 0.65,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.6666666666666666,
+      "zeroMatchShareWhereRelatedExists": 0.2571428571428571
+    },
+    {
+      "threshold": 0.67,
+      "surfaced": 39,
+      "precision": 1,
+      "recall": 0.65,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.6666666666666666,
+      "zeroMatchShareWhereRelatedExists": 0.2571428571428571
+    },
+    {
+      "threshold": 0.68,
+      "surfaced": 36,
+      "precision": 1,
+      "recall": 0.6,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.6923076923076923,
+      "zeroMatchShareWhereRelatedExists": 0.3142857142857143
+    },
+    {
+      "threshold": 0.69,
+      "surfaced": 34,
+      "precision": 1,
+      "recall": 0.5666666666666667,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.7051282051282052,
+      "zeroMatchShareWhereRelatedExists": 0.34285714285714286
+    },
+    {
+      "threshold": 0.7,
+      "surfaced": 30,
+      "precision": 1,
+      "recall": 0.5,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.717948717948718,
+      "zeroMatchShareWhereRelatedExists": 0.37142857142857144
+    },
+    {
+      "threshold": 0.71,
+      "surfaced": 28,
+      "precision": 1,
+      "recall": 0.4666666666666667,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.7435897435897436,
+      "zeroMatchShareWhereRelatedExists": 0.42857142857142855
+    },
+    {
+      "threshold": 0.72,
+      "surfaced": 22,
+      "precision": 1,
+      "recall": 0.36666666666666664,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.8076923076923077,
+      "zeroMatchShareWhereRelatedExists": 0.5714285714285714
+    },
+    {
+      "threshold": 0.73,
+      "surfaced": 20,
+      "precision": 1,
+      "recall": 0.3333333333333333,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.8205128205128205,
+      "zeroMatchShareWhereRelatedExists": 0.6
+    },
+    {
+      "threshold": 0.74,
+      "surfaced": 18,
+      "precision": 1,
+      "recall": 0.3,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.8333333333333334,
+      "zeroMatchShareWhereRelatedExists": 0.6285714285714286
+    },
+    {
+      "threshold": 0.75,
+      "surfaced": 15,
+      "precision": 1,
+      "recall": 0.25,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.8717948717948718,
+      "zeroMatchShareWhereRelatedExists": 0.7142857142857143
+    },
+    {
+      "threshold": 0.76,
+      "surfaced": 15,
+      "precision": 1,
+      "recall": 0.25,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.8717948717948718,
+      "zeroMatchShareWhereRelatedExists": 0.7142857142857143
+    },
+    {
+      "threshold": 0.77,
+      "surfaced": 11,
+      "precision": 1,
+      "recall": 0.18333333333333332,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.8974358974358975,
+      "zeroMatchShareWhereRelatedExists": 0.7714285714285715
+    },
+    {
+      "threshold": 0.78,
+      "surfaced": 10,
+      "precision": 1,
+      "recall": 0.16666666666666666,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.8974358974358975,
+      "zeroMatchShareWhereRelatedExists": 0.7714285714285715
+    },
+    {
+      "threshold": 0.79,
+      "surfaced": 8,
+      "precision": 1,
+      "recall": 0.13333333333333333,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.9102564102564102,
+      "zeroMatchShareWhereRelatedExists": 0.8
+    },
+    {
+      "threshold": 0.8,
+      "surfaced": 4,
+      "precision": 1,
+      "recall": 0.06666666666666667,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.9487179487179487,
+      "zeroMatchShareWhereRelatedExists": 0.8857142857142857
+    },
+    {
+      "threshold": 0.81,
+      "surfaced": 3,
+      "precision": 1,
+      "recall": 0.05,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.9615384615384616,
+      "zeroMatchShareWhereRelatedExists": 0.9142857142857143
+    },
+    {
+      "threshold": 0.82,
+      "surfaced": 3,
+      "precision": 1,
+      "recall": 0.05,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.9615384615384616,
+      "zeroMatchShareWhereRelatedExists": 0.9142857142857143
+    },
+    {
+      "threshold": 0.83,
+      "surfaced": 2,
+      "precision": 1,
+      "recall": 0.03333333333333333,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.9743589743589743,
+      "zeroMatchShareWhereRelatedExists": 0.9428571428571428
+    },
+    {
+      "threshold": 0.84,
+      "surfaced": 2,
+      "precision": 1,
+      "recall": 0.03333333333333333,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.9743589743589743,
+      "zeroMatchShareWhereRelatedExists": 0.9428571428571428
+    },
+    {
+      "threshold": 0.85,
+      "surfaced": 2,
+      "precision": 1,
+      "recall": 0.03333333333333333,
+      "hardNegativeFpRate": 0,
+      "zeroMatchShare": 0.9743589743589743,
+      "zeroMatchShareWhereRelatedExists": 0.9428571428571428
+    }
+  ],
+  "worstFalsePositivesAtRecommendedBalanced": [],
+  "worstFalsePositivesAt060": [
+    {
+      "entry": "fill-7",
+      "kind": "filler",
+      "matched": "mood-1",
+      "score": 0.6521,
+      "now": "Dentist appointment moved to next month. Renewed my library books and cleared out the junk drawer.",
+      "then": "Dentist tomorrow and I'm anxious, my mind keeps rehearsing the worst. I know it's silly but the waiting is awful."
+    },
+    {
+      "entry": "mood-4",
+      "kind": "negative-mood",
+      "matched": "fill-3",
+      "score": 0.6302,
+      "now": "Proud of myself for finally fixing the leaking tap on my own. Watched a video, borrowed a wrench, done in an hour.",
+      "then": "Cleaned the bathroom, did three loads of laundry and finally replaced the lightbulb in the hallway. Not much else happened."
+    },
+    {
+      "entry": "sleep-3",
+      "kind": "idea",
+      "matched": "fill-3",
+      "score": 0.6165,
+      "now": "Long day, mostly meetings and a late train. The sourdough starter finally rose properly, which cheered me up. Dinner was leftover soup. Some",
+      "then": "Cleaned the bathroom, did three loads of laundry and finally replaced the lightbulb in the hallway. Not much else happened."
+    },
+    {
+      "entry": "neg-sleep-2",
+      "kind": "negative-topic",
+      "matched": "sleep-2",
+      "score": 0.6139,
+      "now": "Woke at three to a neighbour's car alarm and could not get back to sleep. Earplugs are on the shopping list.",
+      "then": "Tried a new rule: no screens after ten. I put the phone across the room and felt twitchy for about twenty minutes, then fell asleep faster t"
+    },
+    {
+      "entry": "sample-19",
+      "kind": "negative-sample",
+      "matched": "fill-4",
+      "score": 0.6014,
+      "now": "I tried grinding my coffee a little coarser this morning. The cup tasted less bitter, and I sat outside while it cooled. A bird kept landing",
+      "then": "The office coffee machine broke so I walked to the cafe on the corner. Flat white, nice croissant, forty minutes to answer emails."
+    }
+  ],
+  "worstMisses": [
+    {
+      "later": "sleep-4",
+      "earlier": "sleep-3",
+      "score": 0.4767,
+      "later_text": "Bedtime and my phone again. I keep grabbing it in the dark and an hour disappears. The fix is obvious: keep it out of reach of the bed.",
+      "earlier_text": "Long day, mostly meetings and a late train. The sourdough starter finally rose properly, which cheered me up. Dinner was leftover soup. Something I keep coming "
+    },
+    {
+      "later": "sleep-3",
+      "earlier": "sleep-2",
+      "score": 0.5031,
+      "later_text": "Long day, mostly meetings and a late train. The sourdough starter finally rose properly, which cheered me up. Dinner was leftover soup. Something I keep coming ",
+      "earlier_text": "Tried a new rule: no screens after ten. I put the phone across the room and felt twitchy for about twenty minutes, then fell asleep faster than I have in weeks."
+    },
+    {
+      "later": "boss-2",
+      "earlier": "boss-1",
+      "score": 0.5586,
+      "later_text": "Replaying the review meeting. The criticism came out of nowhere, delivered with an audience, and it ignored everything I did well. I want to ask for private fee",
+      "earlier_text": "My manager told me in front of the team that my report was sloppy. I had worked on it for two weeks and nobody had mentioned any problems before. It felt unfair"
+    },
+    {
+      "later": "guitar-3",
+      "earlier": "guitar-2",
+      "score": 0.5768,
+      "later_text": "Spent the weekend at my aunt's place, the garden was lovely and we had a picnic by the pond. On the drive home I thought about how my playing has been stuck in ",
+      "earlier_text": "Nothing seems to get better on the guitar. Every evening I repeat the same exercises and my fingers refuse to move faster. Progress has flatlined and I wonder w"
+    },
+    {
+      "later": "cook-3",
+      "earlier": "cook-2",
+      "score": 0.5791,
+      "later_text": "I want to type up the recipes my grandma left behind before the paper falls apart, so the family can keep making her food for years.",
+      "earlier_text": "Made nana's lentil soup from her old index card tonight. The smell took me straight back to her small flat. Cooking her dishes is how I keep her close."
+    }
+  ],
+  "runtimeSeconds": 110
+}

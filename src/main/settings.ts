@@ -82,9 +82,9 @@ export function updateSettings(patch: Partial<Settings>): Settings {
 // starting guess, not empirically tuned — adjust here if "balanced" turns
 // out to feel over/under-eager in practice.
 const RESURFACE_THRESHOLDS: Record<ResurfaceSensitivity, number> = {
-  rare: 0.8,
+  rare: 0.74,
   balanced: 0.68,
-  often: 0.64
+  often: 0.61
 }
 
 export function resurfaceSimilarityThreshold(): number {

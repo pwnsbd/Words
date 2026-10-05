@@ -36,3 +36,11 @@ Regression checks cover vector validation, model identity isolation, chronology,
 Four recurring subjects appear in four different phrasings across dates: remembering earlier ideas, perfectionism, array deduplication, and focused mornings. Four other entries provide unrelated everyday subjects. Samples are included in themes and recaps while present and can be deleted individually in the app.
 
 Model source: [Qwen3 Embedding GGUF](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF).
+
+## Mirror-quality results (Qwen3-Embedding-0.6B Q8_0)
+
+`npm run eval:mirror` (about 2 minutes on CPU) scores the app's own retrieval on a labelled synthetic journal (78 entries, 15 idea groups, 28 negatives). Full tables and quoted failures are in `docs/mirror-eval.md`.
+
+- Related pairs score 0.48 to 0.86 (median 0.70); the highest unrelated pair is 0.65, so 0.68 is the lowest threshold that keeps precision at 1.00 with a margin.
+- Thresholds now: rare 0.74 (was 0.80, recall 0.07 made it near-silent), balanced 0.68 (unchanged), often 0.61 (was 0.64; recall 0.70 to 0.83, precision 0.98 to 0.93).
+- Misses are mostly an idea buried in a long entry or a very short paraphrase; passage splitting is out of scope here.
