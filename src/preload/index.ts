@@ -31,6 +31,8 @@ const api = {
   getSettings: (): Promise<Settings> => ipcRenderer.invoke('settings:get'),
   updateSettings: (patch: Partial<Settings>): Promise<Settings> =>
     ipcRenderer.invoke('settings:update', patch),
+  getSpellDictionary: (): Promise<{ aff: string; dic: string } | null> =>
+    ipcRenderer.invoke('spellcheck:dictionary'),
   getModelStatus: (): Promise<ModelStatus> => ipcRenderer.invoke('models:status'),
   downloadModels: (): Promise<void> => ipcRenderer.invoke('models:download'),
   chooseModelsDir: (): Promise<ModelStatus | null> => ipcRenderer.invoke('models:choose-dir'),

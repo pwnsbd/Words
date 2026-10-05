@@ -1268,3 +1268,61 @@ button {
 .pattern__timeline blockquote { margin: 10px 0 0; font-size: 14px; line-height: 1.8; color: var(--ink-soft); white-space: pre-wrap; overflow-wrap: anywhere; }
 .pattern__dismiss { margin-left: 28px; }
 @media (prefers-reduced-motion: reduce) { .patterns-icon svg { transition: none; } }
+
+/* Spellcheck: a soft dotted underline in the theme's ink, never red. Struck
+   words are never marked. The right-click menu is a small paper card. */
+.write__editor .misspelled {
+  text-decoration: underline dotted;
+  text-decoration-color: var(--ink-soft);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+
+.spell-menu {
+  position: fixed;
+  z-index: 50;
+  min-width: 150px;
+  max-width: 240px;
+  padding: 6px 0;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--scroll-divider);
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  font-family: var(--serif);
+  font-size: 14px;
+}
+
+.spell-menu__item {
+  display: block;
+  width: 100%;
+  padding: 5px 14px;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.spell-menu__item:hover:not(:disabled) {
+  background: var(--paper-dim);
+}
+
+.spell-menu__item:disabled {
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+.spell-menu__note {
+  padding: 4px 14px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.spell-menu__rule {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--scroll-divider);
+}

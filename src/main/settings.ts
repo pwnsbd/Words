@@ -19,7 +19,8 @@ const DEFAULT_SETTINGS: Settings = {
   resurfaceSensitivity: 'balanced',
   writingMode: 'pencil',
   quillDeleteLimit: 5,
-  modelsDir: null
+  modelsDir: null,
+  spellcheckWords: []
 }
 
 function settingsPath(): string {

@@ -66,6 +66,8 @@ export interface Settings {
   // folder from Settings → Local models — the app moves the existing files
   // there. The WORDS_MODELS_DIR env var, if set, overrides this.
   modelsDir: string | null
+  // Words the user has added to the spellcheck dictionary (write surface).
+  spellcheckWords: string[]
 }
 
 export interface ModelStatus {

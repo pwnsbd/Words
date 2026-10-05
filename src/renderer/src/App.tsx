@@ -16,10 +16,19 @@ import type {
 } from '../../shared/types'
 import { parseRuns, serializeRuns } from '../../shared/textMarkup'
 import { DRAFT_KEY, readDraft } from './draft'
+import {
+  loadSpellcheck,
+  spellReady,
+  findMisspellings,
+  suggestFor,
+  addPersonalWord,
+  type SpellRange
+} from './spellcheck'
 
 type View = 'patterns' | 'write' | 'journal' | 'read' | 'recap' | 'read-letter' | 'settings'
 type TurnPhase = 'idle' | 'leaving' | 'entering'
 type Char = { ch: string; struck: boolean }
+type SpellMenu = { x: number; y: number; start: number; end: number; word: string; suggestions: string[] }
 
 const RESURFACE_SENSITIVITY_OPTIONS: { value: ResurfaceSensitivity; label: string }[] = [
   { value: 'rare', label: 'rarely' },
@@ -265,6 +274,13 @@ export default function App(): JSX.Element {
   const dialRef = useRef<HTMLDivElement>(null)
   const [dialRotation, setDialRotation] = useState(0)
   const [dialDragging, setDialDragging] = useState(false)
+  // Spellcheck: result of the last debounced pass (tied to the chars it was
+  // computed from), a bump counter for when the dictionary finishes loading,
+  // and the open right-click menu, if any.
+  const [spellResult, setSpellResult] = useState<{ chars: Char[]; ranges: SpellRange[] } | null>(null)
+  const [spellVersion, setSpellVersion] = useState(0)
+  const [spellMenu, setSpellMenu] = useState<SpellMenu | null>(null)
+  const spellMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     focusEditor()
@@ -390,16 +406,123 @@ export default function App(): JSX.Element {
     } catch { setActionError('Settings could not be saved. Please retry.') }
   }
 
-  const plainDraft = useMemo(() => chars.map((c) => c.ch).join(''), [chars])
-  const draftRuns = useMemo(() => {
-    const runs: { text: string; struck: boolean }[] = []
-    for (const c of chars) {
-      const last = runs[runs.length - 1]
-      if (last && last.struck === c.struck) last.text += c.ch
-      else runs.push({ text: c.ch, struck: c.struck })
+  // Load the offline dictionary once settings (and so the personal words)
+  // are known. Failure just means no underlines.
+  const spellWordsLoaded = settings !== null
+  useEffect(() => {
+    if (!spellWordsLoaded) return
+    void loadSpellcheck(settings?.spellcheckWords ?? []).then(() => setSpellVersion((v) => v + 1))
+  }, [spellWordsLoaded])
+
+  // Debounced, off the keystroke path: only re-checks after ~300ms idle,
+  // and per-word results are cached, so long entries stay cheap.
+  useEffect(() => {
+    if (!spellReady()) return
+    const timer = window.setTimeout(() => {
+      setSpellResult({ chars, ranges: findMisspellings(chars) })
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [chars, spellVersion])
+
+  // Ranges stay valid for the untouched prefix of the text while a fresh
+  // check is pending, so only the words near an edit lose their underline
+  // for a moment.
+  const misspellRanges = useMemo<SpellRange[]>(() => {
+    if (!spellResult || chars.length === 0) return []
+    if (spellResult.chars === chars) return spellResult.ranges
+    const old = spellResult.chars
+    const limit = Math.min(old.length, chars.length)
+    let p = 0
+    while (p < limit && old[p].ch === chars[p].ch && old[p].struck === chars[p].struck) p++
+    return spellResult.ranges.filter((r) => r.end < p)
+  }, [spellResult, chars])
+
+  // Like draftRuns, but non-struck runs are further split so a misspelled
+  // word is its own span (carrying its char range for the context menu).
+  const editorRuns = useMemo(() => {
+    const out: { text: string; struck: boolean; spell?: SpellRange }[] = []
+    let r = 0
+    for (let i = 0; i < chars.length; i++) {
+      while (r < misspellRanges.length && misspellRanges[r].end <= i) r++
+      const range = r < misspellRanges.length && misspellRanges[r].start <= i ? misspellRanges[r] : undefined
+      const last = out[out.length - 1]
+      if (last && last.struck === chars[i].struck && last.spell === range) last.text += chars[i].ch
+      else out.push({ text: chars[i].ch, struck: chars[i].struck, spell: range })
     }
-    return runs
+    return out
+  }, [chars, misspellRanges])
+
+  // Any edit invalidates an open menu's range.
+  useEffect(() => {
+    setSpellMenu(null)
   }, [chars])
+
+  useEffect(() => {
+    if (!spellMenu) return
+    const close = (): void => setSpellMenu(null)
+    const onMouseDown = (e: MouseEvent): void => {
+      if (!spellMenuRef.current?.contains(e.target as Node)) close()
+    }
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') close()
+    }
+    window.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('blur', close)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('blur', close)
+      window.removeEventListener('resize', close)
+    }
+  }, [spellMenu])
+
+  function handleEditorContextMenu(e: React.MouseEvent<HTMLElement>): void {
+    const target = (e.target as HTMLElement).closest?.('[data-spell-start]') as HTMLElement | null
+    if (!target) return // no misspelled word here -- leave the default alone
+    e.preventDefault()
+    const start = Number(target.dataset.spellStart)
+    const end = Number(target.dataset.spellEnd)
+    const word = chars.slice(start, end).map((c) => c.ch).join('')
+    setSpellMenu({
+      x: Math.min(e.clientX, window.innerWidth - 190),
+      y: Math.min(e.clientY, window.innerHeight - 220),
+      start,
+      end,
+      word,
+      suggestions: suggestFor(word.replace(/\u2019/g, "'"))
+    })
+  }
+
+  // Whether picking a suggestion may change the text right now. Pencil: yes.
+  // Quill: only while a correction remains (it spends one). Ink: never --
+  // ink doesn't erase or silently replace what you wrote.
+  const canReplaceWord =
+    settings?.writingMode === 'pencil' || (settings?.writingMode === 'quill' && remainingDeletes > 0)
+
+  function applySuggestion(menu: SpellMenu, suggestion: string): void {
+    setSpellMenu(null)
+    focusEditor()
+    if (!canReplaceWord) return
+    const current = chars.slice(menu.start, menu.end)
+    if (current.length === 0 || current.map((c) => c.ch).join('') !== menu.word || current.some((c) => c.struck)) return
+    const replacement = Array.from(suggestion).map((ch) => ({ ch, struck: false }))
+    setChars([...chars.slice(0, menu.start), ...replacement, ...chars.slice(menu.end)])
+    if (remainingDeletes !== Infinity) setRemainingDeletes((r) => r - 1)
+  }
+
+  function addWordToDictionary(menu: SpellMenu): void {
+    setSpellMenu(null)
+    focusEditor()
+    const word = menu.word.replace(/\u2019/g, "'")
+    addPersonalWord(word)
+    setSpellVersion((v) => v + 1)
+    const existing = settings?.spellcheckWords ?? []
+    if (!existing.includes(word)) void applySettings({ spellcheckWords: [...existing, word] })
+  }
+
+  const plainDraft = useMemo(() => chars.map((c) => c.ch).join(''), [chars])
 
   useEffect(() => {
     const unsubscribe = window.api.onReflection(({ id, reflection }) => {
@@ -837,6 +960,7 @@ export default function App(): JSX.Element {
               aria-label="Write"
               onKeyDown={handleEditorKeyDown}
               onPaste={handleEditorPaste}
+              onContextMenu={handleEditorContextMenu}
               onFocus={(e) => {
                 setEditorFocused(true)
                 if (e.target === e.currentTarget) focusEditor()
@@ -846,11 +970,20 @@ export default function App(): JSX.Element {
               {chars.length === 0 && (
                 <span className="write__editor-placeholder">{`What's on your mind ${greeting}?`}</span>
               )}
-              {draftRuns.map((run, i) =>
+              {editorRuns.map((run, i) =>
                 run.struck ? (
                   <s key={i} className="struck-run">
                     {run.text}
                   </s>
+                ) : run.spell ? (
+                  <span
+                    key={i}
+                    className="misspelled"
+                    data-spell-start={run.spell.start}
+                    data-spell-end={run.spell.end}
+                  >
+                    {run.text}
+                  </span>
                 ) : (
                   <span key={i}>{run.text}</span>
                 )
@@ -877,6 +1010,47 @@ export default function App(): JSX.Element {
                 />
               </span>
             </div>
+
+            {spellMenu && (
+              <div
+                ref={spellMenuRef}
+                className="spell-menu"
+                role="menu"
+                style={{ left: spellMenu.x, top: spellMenu.y }}
+                onMouseDown={(e) => e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                {spellMenu.suggestions.length === 0 && (
+                  <div className="spell-menu__note">no suggestions</div>
+                )}
+                {spellMenu.suggestions.map((sug) => (
+                  <button
+                    key={sug}
+                    type="button"
+                    role="menuitem"
+                    className="spell-menu__item"
+                    disabled={!canReplaceWord}
+                    onClick={() => applySuggestion(spellMenu, sug)}
+                  >
+                    {sug}
+                  </button>
+                ))}
+                {!canReplaceWord && spellMenu.suggestions.length > 0 && (
+                  <div className="spell-menu__note">
+                    {settings?.writingMode === 'ink' ? 'ink keeps what you wrote' : 'no corrections left'}
+                  </div>
+                )}
+                <div className="spell-menu__rule" />
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="spell-menu__item"
+                  onClick={() => addWordToDictionary(spellMenu)}
+                >
+                  add to dictionary
+                </button>
+              </div>
+            )}
 
             <div className="write__footer">
               {reflection || resurfaced.length > 0 || showMemoryHint ? (

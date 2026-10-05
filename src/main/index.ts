@@ -292,6 +292,23 @@ app.whenReady().then(() => {
     refreshPatterns()
   })
 
+  // Bundled en_US Hunspell dictionary for the write surface's spellcheck.
+  // dictionary-en is a regular dependency, so electron-builder packs it
+  // into app.asar with node_modules; fs reads inside asar work as normal.
+  // Any failure resolves to null and the renderer simply skips underlines.
+  ipcMain.handle('spellcheck:dictionary', async () => {
+    try {
+      const { default: dict } = await import('dictionary-en')
+      return {
+        aff: Buffer.from(dict.aff).toString('utf-8'),
+        dic: Buffer.from(dict.dic).toString('utf-8')
+      }
+    } catch (err) {
+      console.error('[words] spellcheck dictionary failed to load:', err)
+      return null
+    }
+  })
+
   ipcMain.handle('settings:get', () => getSettings())
 
   ipcMain.handle('settings:update', (_event, patch) => updateSettings(patch))

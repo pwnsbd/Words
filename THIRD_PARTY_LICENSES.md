@@ -14,7 +14,9 @@ model or font is swapped or upgraded, re-check its license before shipping.
 |---|---|---|
 | `@electron-toolkit/preload` | 3.0.2 | MIT |
 | `@electron-toolkit/utils` | 3.0.0 | MIT |
+| `dictionary-en` | 4.0.0 | MIT AND BSD (SCOWL / Ispell en_US Hunspell dictionary) |
 | `node-llama-cpp` | 3.20.0 | MIT |
+| `nspell` | 2.1.5 | MIT |
 
 `node-llama-cpp` is the Node binding Words uses to run models locally
 (`src/main/llamacpp.ts`). Its prebuilt platform packages

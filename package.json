@@ -24,7 +24,9 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
-    "node-llama-cpp": "^3.20.0"
+    "dictionary-en": "^4.0.0",
+    "node-llama-cpp": "^3.20.0",
+    "nspell": "^2.1.5"
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^1.0.1",
