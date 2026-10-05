@@ -1612,3 +1612,9 @@ button {
 :root[data-theme='dark'] .recap .hint,
 :root[data-theme='dark'] section[aria-label='Letter'] .hint,
 :root[data-theme='dark'] .recap__status { color: var(--ink-soft); }
+
+/* Letters read like a page, not a note — give the open letter a wider
+   column (scroll + toolbar together so the icons stay on the scroll's edge). */
+section[aria-label='Letter'] .scroll,
+section[aria-label='Letter'] .read__toolbar,
+section[aria-label='Letter'] .read__actions { max-width: 780px; }
