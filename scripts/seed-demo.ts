@@ -17,23 +17,23 @@ if (!process.env.WORDS_MODELS_DIR && !getSettings().modelsDir) process.env.WORDS
 void app.whenReady().then(async () => {
 try {
   const status = describeModelStatus()
-  if (!status.reflectionModelFound || !status.embeddingModelFound) throw new Error('Both Qwen and Llama files must be present before seeding.')
-  const samples = JSON.parse(await readFile(resolve('sample-entries.json'), 'utf8')) as { daysAgo: number; text: string }[]
-  if (samples.length !== 20) throw new Error('Expected exactly 20 samples')
+  if (!status.reflectionModelFound || !status.embeddingModelFound) throw new Error('Both Qwen model files (reflection and embedding) must be present before seeding.')
+  const demos = JSON.parse(await readFile(resolve('demo-entries.json'), 'utf8')) as { daysAgo: number; text: string }[]
+  if (!Array.isArray(demos) || !demos.length) throw new Error('demo-entries.json has no entries')
   const dir = join(app.getPath('userData'), 'entries')
   await mkdir(dir, { recursive: true })
   const modelId = embeddingModelId()
   if (!modelId) throw new Error('Embedding model is missing')
   const completed: JournalEntry[] = []
-  for (const [i, sample] of samples.entries()) {
-    const id = `words-sample-v1-${String(i + 1).padStart(2, '0')}`
+  for (const [i, demo] of demos.entries()) {
+    const id = `words-demo-v1-${String(i + 1).padStart(2, '0')}`
     let entry = await getEntry(id)
-    if (entry && (!entry.isSample || entry.text !== sample.text)) throw new Error(`Existing entry ${id} does not match this sample; leaving it untouched`)
+    if (entry && entry.text !== demo.text) throw new Error(`Existing entry ${id} does not match this demo entry; leaving it untouched`)
     if (!entry) {
       const date = new Date()
-      date.setDate(date.getDate() - sample.daysAgo)
+      date.setDate(date.getDate() - demo.daysAgo)
       date.setHours(12, 0, 0, 0)
-      entry = { id, createdAt: date.toISOString(), text: sample.text, isSample: true }
+      entry = { id, createdAt: date.toISOString(), text: demo.text }
       await writeFile(join(dir, `${id}.json`), JSON.stringify(entry, null, 2), { encoding: 'utf8', flag: 'wx' })
     }
     const memory = await indexEntry(entry, modelId)
@@ -44,7 +44,7 @@ try {
       await updateEntry(id, reflection)
     }
     completed.push((await getEntry(id))!)
-    console.log(`Sample ${i + 1}/20 ready (Qwen embedding + Llama reflection)`)
+    console.log(`Demo entry ${i + 1}/${demos.length} ready (Qwen embedding + Qwen reflection)`)
   }
   const index = new BruteForceSimilarityIndex()
   for (const entry of completed) index.add({ id: entry.id, createdAt: entry.createdAt, memory: entry.memory! })
@@ -55,7 +55,7 @@ try {
   }))
   await mkdir(resolve('docs'), { recursive: true })
   await writeFile(resolve('docs/demo-results.json'), JSON.stringify(report, null, 2), 'utf8')
-  console.log(`Verified ${completed.length} samples with reflections and embeddings in ${dir}`)
+  console.log(`Verified ${completed.length} demo entries with reflections and embeddings in ${dir}`)
   await resetModelContexts()
   app.exit(0)
 } catch (error) {

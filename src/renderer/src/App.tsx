@@ -1725,7 +1725,7 @@ export default function App(): JSX.Element {
 
             <div className="settings__group">
               <h2 className="settings__label">Local models</h2>
-              <p className="settings__about-line">Reflections: Llama 3.1 8B Instruct (~4.9 GB).</p>
+              <p className="settings__about-line">Reflections: Qwen3.5-9B (~5.7 GB).</p>
               <p className="settings__about-line">Memory: Qwen3 Embedding 0.6B (~639 MB).</p>
               <p className="settings__about-line">Similar thoughts are found in passages, even when phrased differently. Matches suggest related ideas; they do not prove equivalent code.</p>
               <button className="journal__link" disabled={memoryBusy} onClick={async () => {

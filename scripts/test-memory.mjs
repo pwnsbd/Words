@@ -159,9 +159,14 @@ console.log('Echo tests passed (most-connected passage, model isolation, thresho
 for (const previous of [null, { reflectionModel: 'off', embeddingModel: 'nomic', theme: 'dark' }]) {
   let persisted
   const settingsModule = { exports: {} }
+  const typesModule = { exports: {} }
+  runInNewContext(ts.transpileModule(readFileSync(new URL('../src/shared/types.ts', import.meta.url), 'utf8'), {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS }
+  }).outputText, { exports: typesModule.exports })
   runInNewContext(ts.transpileModule(readFileSync(new URL('../src/main/settings.ts', import.meta.url), 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS }
   }).outputText, { exports: settingsModule.exports, console, require: id => ({
+    '../shared/types': typesModule.exports,
     electron: { app: { getPath: () => '/test' } },
     path: { join: (...parts) => parts.join('/') },
     fs: { readFileSync: () => { if (!previous) throw new Error('missing'); return JSON.stringify(previous) },
