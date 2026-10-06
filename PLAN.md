@@ -1,9 +1,9 @@
 # Words — PLAN
 
-**Goal:** Release Words v0.2.0 on GitHub (Rasa pattern) as *the mirror*: a private journal that remembers what you wrote, so you notice when you're thinking it again.
+**Goal:** Release Words v0.2.0 on GitHub (Rasa pattern) as a living journal that helps you reflect and notice the patterns in your thinking — private, all models local.
 
 ## Decisions (2026-10-04)
-- One job = **the mirror** (resurfacing similar past passages). Release copy leads with it.
+- Release copy = the user's own description (README top, approved 2026-10-05): reflect, notice recurring thoughts (similar thoughts + Patterns), everything local, the experiment's "why". No "mirror" label.
 - Licence: **MIT**.
 - In scope: regenerate reflection, spellcheck + IME on the write surface, **writing dial stays and is featured**.
 - Out of scope for this release: wax-seal image generation, PDF/other-app import.
@@ -20,12 +20,9 @@
 | T4b | Letters: finished-period rules (week 2; month every-week or 5; year 12 or 6 months), "from N entries", feather "write again" | builder | docs/contracts/letters.md | test:letters | done 8af8ec8 |
 | T4c | UI polish: delete icon + top-right actions (7c003a2), Patterns rope + knots (d2c27c2), ink scrollbar (29eb578) | builder | renderer | user visual check | merged, visual check pending |
 | T5 | First-run: mirror visible early (empty-state copy) | Conductor + user (taste) | App.tsx | user approves | done ae8c8ef |
-| T6 | README rewrite around the mirror + GH Pages showcase + demo | Conductor drafts, builder builds | README.md, docs/index.html | user approves | after T5 |
+| T6 | README rewrite (intro from user's description) + GH Pages showcase + demo | Conductor drafts, builder builds | README.md, docs/index.html | user approves | intro done; showcase + demo pending |
 | T7 | docs/release-readiness.md + fresh-account install test | Conductor + user | docs/ | install test passes | last |
 | T8 | Tag v0.2.0, GitHub Release with installer | user confirms | — | release live | last |
 | T9 | Handwriting fonts: 3 per writing mode, chosen in Settings, stored per entry | builder | see docs/contracts/handwriting.md | contract done-check + user visual check | merged, size tuning pending |
-
-| T10 | Reflection model → Qwen3.5-9B: side-by-side eval (A), swap after user approves (B) | builder | see docs/contracts/reflection-model.md | contract done-check + user picks | A in progress |
-
-## Cleanup left for the user
-- Delete stray `--help` (SQLite file), `.memory-smoke-*` dirs and `*.log` at repo root (now git-ignored).
+| T10 | Reflection model → Qwen3.5-9B: side-by-side eval (A), swap after user approves (B) | builder | see docs/contracts/reflection-model.md | contract done-check + user picks | A+B on worktree branch (519315f, 24f4008); waiting on user's pick |
+| T11 | Demo journal: 20 entries in demo-entries.json (philosophy, happy, release excitement, doubt), seeded via seed:demo | Conductor writes, builder adapts seed script | demo-entries.json, scripts/seed-demo.ts | user approves text; app shows the 4 patterns + letters | text drafted; seeding waits on T10 |

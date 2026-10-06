@@ -23,6 +23,17 @@
 - Update the model names, sizes and licences in README.md, docs/PROJECT_OVERVIEW.md, docs/memory-models.md and THIRD_PARTY_LICENSES.md.
 - Prompts change only if the eval shows a Qwen-specific failure. List any prompt change in the report.
 
+**Part C — Qwen fix round (the user chose Qwen on 2026-10-06; A and B are merged as 555cddc and ac6f625):**
+- C1, model code (`src/main/llamacpp.ts`):
+  - Wait for each context sequence to be fully released (`await sequence.dispose()`, or whatever node-llama-cpp provides) before a call returns, so back-to-back calls never hit "No sequences left".
+  - Change the `describePattern` prompt so Qwen marks the 4-paraphrase group (entries 1, 6, 11, 16) as a pattern, with a title and description.
+  - Change the reflection prompt so Qwen writes one short sentence (≤ 25 words, ideally ≤ 20).
+  - Don't loosen grounding: the c53a8e4 rule that one entry can't become a pattern still applies. The 4 unrelated sample entries must not be marked as a pattern.
+- C2, everything else:
+  - `App.tsx` model label shows Qwen3.5-9B (~5.7 GB).
+  - `test:memory` passes again (stub `shared/types` / `DEFAULT_HANDWRITING`).
+  - `seed:demo` reads `demo-entries.json`, accepting any number of entries, instead of the fixed 20 in `sample-entries.json`.
+
 **Errors:** if a model file is missing, the script exits with a clear message. The script must **never** read or write the real journal (`%APPDATA%\words`); it uses a temporary folder and deletes it afterwards. One failed entry is recorded as a failure and does not stop the run.
 
 **Perf budget:** a Qwen reflection should take no more than about 1.5× Llama's latency on the same machine. The eval completes in under 15 minutes.
