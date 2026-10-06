@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Words: a living journal</title>
+<meta name="description" content="A living journal that helps you reflect on your thoughts and see the patterns in your thinking. Free, open source, runs on your computer.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f4ecdc;--paper-dim:#ece2cd;--ink:#3a332c;--ink-soft:#6b6154;--ink-faint:#a89d8a;--parch:#efe4cc;--parch-2:#e6d8b2;--seal:#5b2a24;--seal-light:#c97a3d;--shadow:0 12px 40px rgba(58,51,44,.18)}
+@media (prefers-color-scheme:dark){:root{--paper:#2a2723;--paper-dim:#35312a;--ink:#e9e2d3;--ink-soft:#b6ab95;--ink-faint:#7d7362;--parch:#35312a;--parch-2:#3f3a31;--seal:#d98f52;--seal-light:#d98f52;--shadow:0 12px 40px rgba(0,0,0,.45)}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:18px/1.7 Lora,Georgia,serif;overflow-x:hidden}
+a{color:var(--seal);text-underline-offset:3px}
+a:hover{color:var(--seal-light)}
+.col{max-width:720px;margin:0 auto;padding:0 16px}
+.wide{max-width:1100px;margin:0 auto;padding:0 16px}
+section{padding:56px 0}
+h1,h2,h3{font-weight:600;line-height:1.25;margin:0 0 .6em}
+h2{font-size:1.7rem}
+h3{font-size:1.3rem}
+p{margin:0 0 1.1em}
+code{font-size:.9em;background:var(--paper-dim);padding:.1em .4em;border-radius:4px}
+.hero{text-align:center;padding:64px 0 24px}
+.hero img.icon{width:88px;height:88px}
+.hero h1{font-size:3rem;margin:.2em 0 .3em;letter-spacing:.01em}
+.tag{font-size:1.25rem;color:var(--ink-soft);max-width:560px;margin:0 auto 1.6em}
+.btn{display:inline-block;background:var(--seal);color:var(--paper);padding:.8em 1.8em;border-radius:999px;text-decoration:none;font-weight:600;box-shadow:0 4px 14px rgba(91,42,36,.25)}
+.btn:hover{background:var(--seal-light);color:var(--paper)}
+@media (prefers-color-scheme:dark){.btn,.btn:hover{color:#2a2723}}
+.quiet{color:var(--ink-faint);font-size:.9rem;margin:1.2em 0 0}
+.media{display:block;width:100%;height:auto;aspect-ratio:16/10;background:var(--paper-dim);border-radius:14px;box-shadow:var(--shadow);object-fit:cover;color:var(--ink-soft);font-size:.9rem}
+.showcase{margin:40px auto 0}
+.row{display:grid;grid-template-columns:1.5fr 1fr;gap:40px;align-items:center;margin:0 0 64px}
+.row.flip{grid-template-columns:1fr 1.5fr}
+.row.flip .media{order:2}
+.row p{margin:0;color:var(--ink-soft)}
+.stays ul{padding-left:1.2em;margin:0}
+.stays li{margin-bottom:.6em}
+.why{background:var(--parch)}
+.why .col{max-width:620px}
+.why p{font-size:1.15rem;line-height:1.8}
+.why .sign{font-family:Caveat,cursive;font-size:2rem;color:var(--seal);margin:0}
+ol{padding-left:1.3em}
+ol li{margin-bottom:.8em}
+footer{text-align:center;padding:40px 16px 56px;color:var(--ink-faint);font-size:.95rem}
+@media (max-width:760px){
+body{font-size:17px}
+section{padding:40px 0}
+.hero h1{font-size:2.4rem}
+.row,.row.flip{grid-template-columns:1fr;gap:16px;margin-bottom:48px}
+.row.flip .media{order:0}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wide">
+<img class="icon" src="icon.svg" alt="" width="88" height="88">
+<h1>Words</h1>
+<p class="tag">A living journal that helps you reflect on your thoughts and see the patterns in your thinking.</p>
+<a class="btn" href="https://github.com/pwnsbd/Words/releases/latest">Download for Windows</a>
+<p class="quiet">Free and open source · Windows · everything runs on your computer</p>
+<div class="showcase">
+<video class="media" controls playsinline preload="metadata" poster="media/write.png" width="1440" height="900"><source src="media/showcase.mp4" type="video/mp4"></video>
+</div>
+</div></header>
+
+<main>
+<section id="what"><div class="col">
+<h2>What Words is</h2>
+<p>Words is a living journal. It helps you reflect on your thoughts and see the patterns in your thinking.</p>
+<p>It's not here to judge you. It's here to show you the things you keep coming back to in your writing.</p>
+<p>It uses a local embedding model to remember what you write, and a local instruct model to surface the patterns. Everything stays in-house, on your own computer. So there's no fear about who will see what you've journaled. Nobody does.</p>
+</div></section>
+
+<section id="does"><div class="wide">
+<h2 style="text-align:center;margin-bottom:40px">What it does</h2>
+<div class="row"><img class="media" src="media/write.png" alt="The blank writing page in Words, with the pencil, quill and ink dial" width="1440" height="900" loading="lazy">
+<div><h3>You just write</h3><p>It opens straight to a blank page. No dashboard, nothing to set up. Press <strong>Ctrl+Enter</strong> or click <strong>save entry</strong> when you're done.</p></div></div>
+<div class="row flip"><img class="media" src="media/saved.png" alt="A short reflection fading in beneath a freshly saved entry" width="1440" height="900" loading="lazy">
+<div><h3>It reflects back, gently</h3><p>After you save, a short line fades in. It notices a thought or a question in what you wrote. It doesn't give advice, it doesn't label you. If you want another take, hit <strong>listen again</strong>.</p></div></div>
+<div class="row"><img class="media" src="media/journal.png" alt="The journal view with past entries and their wax seals" width="1440" height="900" loading="lazy">
+<div><h3>It remembers</h3><p>When you write something you've written before, maybe months ago and in different words, it shows you that earlier passage with its date, so you can go back and read it.</p></div></div>
+<div class="row flip"><img class="media" src="media/patterns.png" alt="The Patterns view listing ideas that keep returning, with dates and quoted lines" width="1440" height="900" loading="lazy">
+<div><h3>It finds your patterns</h3><p>Once an idea keeps showing up, across at least three entries on three different days, it shows up in <strong>Patterns</strong>, with the dates and the actual lines you wrote.</p></div></div>
+<div class="row"><img class="media" src="media/letter.png" alt="A letter from Words summarising a week of writing" width="1440" height="900" loading="lazy">
+<div><h3>It writes you letters</h3><p>At the end of a week, a month or a year, Words writes you a short letter from what you wrote in that time.</p></div></div>
+<div class="row flip"><img class="media" src="media/entry.png" alt="A saved entry shown exactly as it was written" width="1440" height="900" loading="lazy">
+<div><h3>Entries stay as you wrote them</h3><p>You can delete one, but not change it. That's on purpose: it makes the moment you write a little more honest.</p></div></div>
+</div></section>
+
+<section class="stays" id="private"><div class="col">
+<h2>Your writing stays yours</h2>
+<ul>
+<li>Everything runs on your computer. Nothing you write is ever uploaded.</li>
+<li>Your entries are plain files in <code>%APPDATA%\words\</code>.</li>
+<li>The only thing Words downloads is the two models, once, on first run. After that it works offline.</li>
+<li>If you uninstall, it asks whether to delete your journal too. The default is no.</li>
+</ul>
+</div></section>
+
+<section class="why" id="why"><div class="col">
+<h2>Why I made this</h2>
+<p>This is an experiment.</p>
+<p>Models keep getting better, and they're becoming easier for normal people to run. I believe we'll start seeing everyday applications that run on the user's own GPU, locally, instead of always going to a cloud model. I'm not trying to get rid of cloud solutions. I want to show that something simple, something you'd use every day, can use the power of your own GPU to do things a CPU has a hard time with, without invading your privacy, just by picking the right models for the job.</p>
+<p>I think we're already heading that way. Words is my small contribution to what everyday apps might look like soon: you don't need to know how to configure a GPU, or it becomes common knowledge, or it just comes preconfigured, the way it does with games.</p>
+<p>A hybrid era is here, where the CPU and GPU both drive a simple application. The question is how.</p>
+<p class="sign" aria-label="Pawan">— Pawan</p>
+</div></section>
+
+<section id="install"><div class="col">
+<h2>Install (Windows)</h2>
+<ol>
+<li>Download the installer from <a href="https://github.com/pwnsbd/Words/releases">Releases</a>.</li>
+<li>Windows will probably warn you, because the installer isn't signed (I don't have a code-signing certificate). Click <strong>More info</strong> → <strong>Run anyway</strong>.</li>
+<li>Open Words and start writing. The models (about 6.3 GB) download in the background on first run. You can write and save while they download; reflections and memory start once they're ready.</li>
+</ol>
+<p><strong>You'll want a GPU.</strong> Words uses your graphics card automatically through CUDA or Vulkan, so there's nothing to configure. A recent graphics card with 8 GB or more of VRAM works well. Without a GPU it still runs on the CPU, just much slower.</p>
+</div></section>
+</main>
+
+<footer><a href="https://github.com/pwnsbd/Words">GitHub</a> · MIT licence</footer>
+</body>
+</html>
