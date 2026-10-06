@@ -1,5 +1,7 @@
 # Contract: feelings first, then the reflection (T15)
 
+> **Superseded 2026-10-06:** dropped after three rounds (latency 2–13× the old prompt; sparse list collapsed to []). The user replaced the reflection prompt with their own text (PLAN T16). Kept for the record.
+
 **Why:** the reflection prompt asks the model to notice "a thought, question, tension, possibility, or connection", and its only example is a tension. Pure-joy entries get answers like "a quiet tension between anticipation and the unknown" or "a quiet weight of expectation". The user wants no categories steering it. The reflection should come purely from the feelings the words and sentences actually carry (user, 2026-10-06).
 
 **Current shape (src/main/llamacpp.ts):**
@@ -43,6 +45,8 @@
 - If the model's output is invalid, or `sentences.length` doesn't equal the input count, return null, as reflect() does today when output is unusable. The entry still saves.
 - A one-word or emoji-only entry is one sentence, so it works.
 - An empty entry → null (as today).
+
+**Long entries (user, 2026-10-06):** the reflection must stay true to long entries (15–50+ sentences, several paragraphs), not just 1–2 sentences. It reflects what dominates the whole entry, not the last paragraph or a small aside. The eval includes long entries and reports latency by length.
 
 **Perf budget:** median reflect latency ≤ 1.3× the current prompt on the same machine (the output JSON is longer). The guard retry is allowed on ≤ 10 % of entries in the eval.
 
