@@ -54,7 +54,7 @@ function checkReflection(label, r) {
   check(r !== null && r !== undefined, `${label}: reflection is null${errors.length ? ` (${errors.join('; ')})` : ''}`)
   if (!r) return
   console.log(`${label}: "${r.reflection}"  mood=${r.mood}  words=${words(r.reflection)}`)
-  check([-1, 0, 1].includes(r.mood), `${label}: missing mood`)
+  check([-2, -1, 0, 1, 2].includes(r.mood), `${label}: missing mood`)
   check(!leak(r.reflection) && !leak(String(r.mood)), `${label}: <think leak`)
 }
 
