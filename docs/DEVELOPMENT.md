@@ -238,9 +238,9 @@ alongside them in `%APPDATA%\words\settings.json`. Nothing leaves your machine.
 
 ## Twenty sample entries
 
-Run `npm run seed:demo` from the project root with both model files present. This explicitly adds 20 backdated entries to the normal Words journal, generates real Qwen reflections and Qwen passage embeddings, and writes a sample-only matching report to `docs/demo-results.json`. Sample entries are labeled **sample** in the journal and reading view. Re-running resumes safely without duplicating samples or overwriting unrelated entries. Samples can be deleted through the journal like other entries; they contribute to theme/recap results while present.
+Run `npm run seed:demo` from the project root with both model files present. This explicitly adds 20 backdated entries to the normal Words journal, generates real Qwen reflections and Qwen passage embeddings, and writes a sample-only matching report to `test/results/demo-results.json`. Sample entries are labeled **sample** in the journal and reading view. Re-running resumes safely without duplicating samples or overwriting unrelated entries. Samples can be deleted through the journal like other entries; they contribute to theme/recap results while present.
 
-The writing is in `sample-entries.json`: four versions each of a journal-memory idea, perfectionism, array deduplication, and protecting a quiet morning hour, plus four unrelated everyday entries. Open a recent sample to follow its earlier matches, or save a new paraphrase of one of those ideas.
+The writing is in `test/fixtures/sample-entries.json`: four versions each of a journal-memory idea, perfectionism, array deduplication, and protecting a quiet morning hour, plus four unrelated everyday entries. Open a recent sample to follow its earlier matches, or save a new paraphrase of one of those ideas.
 
 Patterns still starts with semantically related passages. A shared reasoning approach across very different subjects may not be retrieved by the embedding stage; recognition is evidence-based and not exhaustive.
 

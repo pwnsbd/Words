@@ -5,7 +5,7 @@
 **Inputs:**
 - Current model: `models/reflection-model.gguf` (Meta Llama 3.1 8B Instruct Q4_K_M).
 - Candidate model: `models/Qwen3.5-9B-Q4_K_M.gguf` (unsloth/Qwen3.5-9B-GGUF, 5.68 GB, text only, no mmproj).
-- `sample-entries.json` (20 entries).
+- `test/fixtures/sample-entries.json` (20 entries).
 - The app's own `reflect`, `describePattern` and `writeLetterForTimeframe` in `src/main/llamacpp.ts`, run as they are, not re-implemented.
 
 **Part A — side-by-side eval (commit 1):**
@@ -13,7 +13,7 @@
   - 20 reflections plus mood marks, one per sample entry, with latency;
   - 1 pattern (`describePattern`) on the 4 paraphrases of one idea group;
   - 1 week letter from 5 or more of the sample entries.
-- Output: `docs/reflection-eval.md`, a Llama | Qwen table per entry with the entry text shortened to about 120 characters, plus the pattern and the letter side by side. Also report average and p95 latency, model load time, and any JSON parse failures or nulls. Raw results go to `docs/reflection-eval.json`.
+- Output: `test/results/reflection-eval.md`, a Llama | Qwen table per entry with the entry text shortened to about 120 characters, plus the pattern and the letter side by side. Also report average and p95 latency, model load time, and any JSON parse failures or nulls. Raw results go to `test/results/reflection-eval.json`.
 - Qwen3.5 must not leak thinking. No `<think>` blocks or reasoning may appear in the output. Turn thinking off through node-llama-cpp's chat wrapper or a token budget, not by stripping text afterwards. The eval flags any output containing `<think` or `</think`.
 - If node-llama-cpp 3.20 can't load the Qwen3.5 architecture, upgrade `node-llama-cpp` (latest is 3.22.1). Report that, and confirm Llama still loads after the upgrade.
 
@@ -32,7 +32,7 @@
 - C2, everything else:
   - `App.tsx` model label shows Qwen3.5-9B (~5.7 GB).
   - `test:memory` passes again (stub `shared/types` / `DEFAULT_HANDWRITING`).
-  - `seed:demo` reads `demo-entries.json`, accepting any number of entries, instead of the fixed 20 in `sample-entries.json`.
+  - `seed:demo` reads `test/fixtures/demo-entries.json`, accepting any number of entries, instead of the fixed 20 in `test/fixtures/sample-entries.json`.
 
 **Errors:** if a model file is missing, the script exits with a clear message. The script must **never** read or write the real journal (`%APPDATA%\words`); it uses a temporary folder and deletes it afterwards. One failed entry is recorded as a failure and does not stop the run.
 
@@ -40,4 +40,4 @@
 
 **Out of scope:** the embedding model, the mirror thresholds, UI, a model-picker UI and migrating existing reflections.
 
-**Done-check:** `npm run eval:reflection` runs end to end for both models. `docs/reflection-eval.md` exists with no `<think` leaks. `npm run typecheck`, `npm run test:memory` and `npm run test:letters` pass after each commit.
+**Done-check:** `npm run eval:reflection` runs end to end for both models. `test/results/reflection-eval.md` exists with no `<think` leaks. `npm run typecheck`, `npm run test:memory` and `npm run test:letters` pass after each commit.

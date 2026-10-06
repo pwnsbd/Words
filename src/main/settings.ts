@@ -102,7 +102,7 @@ export function updateSettings(patch: Partial<Settings>): Settings {
 }
 
 // Friendly labels instead of a raw number in the settings UI. Values are
-// tuned with `npm run eval:mirror` (see docs/mirror-eval.md) on a small
+// tuned with `npm run eval:mirror` (see test/results/mirror-eval.md) on a small
 // synthetic set — re-run it before changing them.
 const RESURFACE_THRESHOLDS: Record<ResurfaceSensitivity, number> = {
   rare: 0.74,

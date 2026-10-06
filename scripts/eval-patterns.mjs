@@ -36,8 +36,8 @@ runInNewContext(source, {
 })
 const { describePattern, resetModelContexts } = service.exports
 
-const demo = JSON.parse(readFileSync(join(root, 'demo-entries.json'), 'utf8')).map(e => e.text)
-const sample = JSON.parse(readFileSync(join(root, 'sample-entries.json'), 'utf8')).map(e => e.text)
+const demo = JSON.parse(readFileSync(join(root, 'test/fixtures/demo-entries.json'), 'utf8')).map(e => e.text)
+const sample = JSON.parse(readFileSync(join(root, 'test/fixtures/sample-entries.json'), 'utf8')).map(e => e.text)
 const pick = (list, idx) => idx.map(i => list[i - 1]) // 1-based
 
 const sets = [

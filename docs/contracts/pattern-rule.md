@@ -16,10 +16,10 @@
 
 **Test set (run through the app's real `describePattern`):**
 - **Must be true:**
-  - demo-entries.json entries 5/9/13 (doubt), 2/6/18 (identity), 7/11/19 (unplanned happiness), 12/16/20 (release excitement);
-  - sample-entries.json entries 1/6/11/16.
+  - test/fixtures/demo-entries.json entries 5/9/13 (doubt), 2/6/18 (identity), 7/11/19 (unplanned happiness), 12/16/20 (release excitement);
+  - test/fixtures/sample-entries.json entries 1/6/11/16.
 - **Must be false:**
-  - sample-entries.json entries 5/10/15/20 (unrelated);
+  - test/fixtures/sample-entries.json entries 5/10/15/20 (unrelated);
   - a synthetic set of 3 excerpts with the same mood and unrelated events (calm walk / calm music / calm nap);
   - a synthetic set of 3 excerpts that are happy about unrelated things with no stated idea (a good dinner / sunny weather / a finished book);
   - a mixed set of demo entries 5/7/16 (different themes).

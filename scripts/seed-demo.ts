@@ -18,8 +18,8 @@ void app.whenReady().then(async () => {
 try {
   const status = describeModelStatus()
   if (!status.reflectionModelFound || !status.embeddingModelFound) throw new Error('Both Qwen model files (reflection and embedding) must be present before seeding.')
-  const demos = JSON.parse(await readFile(resolve('demo-entries.json'), 'utf8')) as { daysAgo: number; text: string }[]
-  if (!Array.isArray(demos) || !demos.length) throw new Error('demo-entries.json has no entries')
+  const demos = JSON.parse(await readFile(resolve('test/fixtures/demo-entries.json'), 'utf8')) as { daysAgo: number; text: string }[]
+  if (!Array.isArray(demos) || !demos.length) throw new Error('test/fixtures/demo-entries.json has no entries')
   const dir = join(app.getPath('userData'), 'entries')
   await mkdir(dir, { recursive: true })
   const modelId = embeddingModelId()
@@ -54,7 +54,7 @@ try {
       .map(match => ({ id: match.id, score: Number(match.score.toFixed(3)) }))
   }))
   await mkdir(resolve('docs'), { recursive: true })
-  await writeFile(resolve('docs/demo-results.json'), JSON.stringify(report, null, 2), 'utf8')
+  await writeFile(resolve('test/results/demo-results.json'), JSON.stringify(report, null, 2), 'utf8')
   console.log(`Verified ${completed.length} demo entries with reflections and embeddings in ${dir}`)
   await resetModelContexts()
   app.exit(0)
