@@ -33,7 +33,7 @@ code{font-size:.9em;background:var(--paper-dim);padding:.1em .4em;border-radius:
 .btn:hover{background:var(--seal-light);color:var(--paper)}
 @media (prefers-color-scheme:dark){.btn,.btn:hover{color:#2a2723}}
 .quiet{color:var(--ink-faint);font-size:.9rem;margin:1.2em 0 0}
-.media{display:block;width:100%;height:auto;aspect-ratio:16/10;background:var(--paper-dim);border-radius:14px;box-shadow:var(--shadow);object-fit:cover;color:var(--ink-soft);font-size:.9rem}
+.media{display:block;width:100%;height:auto;background:var(--paper-dim);border-radius:14px;box-shadow:var(--shadow);object-fit:contain;color:var(--ink-soft);font-size:.9rem}
 .showcase{margin:40px auto 0}
 .row{display:grid;grid-template-columns:1.5fr 1fr;gap:40px;align-items:center;margin:0 0 64px}
 .row.flip{grid-template-columns:1fr 1.5fr}
@@ -65,7 +65,7 @@ section{padding:40px 0}
 <a class="btn" href="https://github.com/pwnsbd/Words/releases/latest">Download for Windows</a>
 <p class="quiet">Free and open source · Windows · everything runs on your computer</p>
 <div class="showcase">
-<video class="media" controls playsinline preload="metadata" poster="media/write.png" width="1440" height="900"><source src="media/showcase.mp4" type="video/mp4"></video>
+<video class="media" style="max-width:720px;margin:0 auto" controls playsinline preload="metadata" width="1280" height="1364"><source src="media/showcase.mp4" type="video/mp4"></video>
 </div>
 </div></header>
 
@@ -79,18 +79,16 @@ section{padding:40px 0}
 
 <section id="does"><div class="wide">
 <h2 style="text-align:center;margin-bottom:40px">What it does</h2>
-<div class="row"><img class="media" src="media/write.png" alt="The blank writing page in Words, with the pencil, quill and ink dial" width="1440" height="900" loading="lazy">
+<div class="row"><img class="media" src="media/write.png" alt="The writing page in Words, mid-sentence, with the pencil, quill and ink dial" width="1422" height="1126" loading="lazy">
 <div><h3>You just write</h3><p>It opens straight to a blank page. No dashboard, nothing to set up. Press <strong>Ctrl+Enter</strong> or click <strong>save entry</strong> when you're done.</p></div></div>
-<div class="row flip"><img class="media" src="media/saved.png" alt="A short reflection fading in beneath a freshly saved entry" width="1440" height="900" loading="lazy">
+<div class="row flip"><img class="media" src="media/entry.png" alt="A saved entry with its one-line reflection and wax seal" width="1422" height="1516" loading="lazy">
 <div><h3>It reflects back, gently</h3><p>After you save, a short line fades in. It notices a thought or a question in what you wrote. It doesn't give advice, it doesn't label you. If you want another take, hit <strong>listen again</strong>.</p></div></div>
-<div class="row"><img class="media" src="media/journal.png" alt="The journal view with past entries and their wax seals" width="1440" height="900" loading="lazy">
+<div class="row"><img class="media" src="media/journal.png" alt="The journal, where each entry card shows an earlier passage it echoes" width="1422" height="1516" loading="lazy">
 <div><h3>It remembers</h3><p>When you write something you've written before, maybe months ago and in different words, it shows you that earlier passage with its date, so you can go back and read it.</p></div></div>
-<div class="row flip"><img class="media" src="media/patterns.png" alt="The Patterns view listing ideas that keep returning, with dates and quoted lines" width="1440" height="900" loading="lazy">
+<div class="row flip"><img class="media" src="media/patterns.png" alt="Patterns showing one idea that returned across three entries, with dates and the lines written" width="1422" height="1516" loading="lazy">
 <div><h3>It finds your patterns</h3><p>Once an idea keeps showing up, across at least three entries on three different days, it shows up in <strong>Patterns</strong>, with the dates and the actual lines you wrote.</p></div></div>
-<div class="row"><img class="media" src="media/letter.png" alt="A letter from Words summarising a week of writing" width="1440" height="900" loading="lazy">
+<div class="row"><img class="media" src="media/letter.png" alt="A weekly letter Words wrote from three entries" width="1422" height="1516" loading="lazy">
 <div><h3>It writes you letters</h3><p>At the end of a week, a month or a year, Words writes you a short letter from what you wrote in that time.</p></div></div>
-<div class="row flip"><img class="media" src="media/entry.png" alt="A saved entry shown exactly as it was written" width="1440" height="900" loading="lazy">
-<div><h3>Entries stay as you wrote them</h3><p>You can delete one, but not change it. That's on purpose: it makes the moment you write a little more honest.</p></div></div>
 </div></section>
 
 <section class="stays" id="private"><div class="col">

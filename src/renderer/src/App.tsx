@@ -1603,7 +1603,7 @@ export default function App(): JSX.Element {
               <h2 className="settings__label">About Words</h2>
               <p className="settings__about-line">
                 Experimental preview. Reflections and connections can be mistaken. Keep a separate backup
-                of important writing. Local models download about 5.5 GB on first launch; writing works
+                of important writing. Local models download about 6.3 GB on first launch; writing works
                 while they set up. Unsaved drafts are recovered on this device when you reopen Words.
               </p>
               <p className="settings__about-line">
@@ -1636,9 +1636,9 @@ export default function App(): JSX.Element {
                 </li>
               </ul>
               <p className="settings__about-line">
-                The journal view gathers everything you've written, notes a recurring theme when one's
-                genuinely there, and can write you a short letter from your past month once you've got a few
-                entries in. You can also import old plain-text journal entries from there.
+                The journal view gathers everything you've written, and you can import old plain-text
+                journal entries from there. Patterns shows the ideas and questions you keep coming back to.
+                Letters are written for each finished week, month and year that has enough entries in it.
               </p>
             </div>
 
