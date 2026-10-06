@@ -1,208 +1,194 @@
 [
   {
-    "id": "words-sample-v1-01",
-    "createdAt": "2026-06-25T17:00:00.000Z",
-    "reflection": "This entry has a loose, associative quality to it, with ideas flowing together in a meandering stream.",
-    "matches": []
-  },
-  {
-    "id": "words-sample-v1-02",
-    "createdAt": "2026-06-30T17:00:00.000Z",
-    "reflection": "This entry has a hesitant, self-critical quality to it, with a sense of stuckness and indecision.",
-    "matches": []
-  },
-  {
-    "id": "words-sample-v1-03",
-    "createdAt": "2026-07-05T17:00:00.000Z",
-    "reflection": "This entry has a concise, matter-of-fact quality to it.",
-    "matches": []
-  },
-  {
-    "id": "words-sample-v1-04",
-    "createdAt": "2026-07-10T17:00:00.000Z",
-    "reflection": "This entry has a deliberate, structured quality to it, with a focus on establishing a productive routine.",
-    "matches": []
-  },
-  {
-    "id": "words-sample-v1-05",
-    "createdAt": "2026-07-15T17:00:00.000Z",
-    "reflection": "This entry has a warm, comforting quality to it, with a gentle, unhurried pace.",
-    "matches": []
-  },
-  {
-    "id": "words-sample-v1-06",
-    "createdAt": "2026-07-25T17:00:00.000Z",
-    "reflection": "The entry has a worn, fragmented quality, with ideas and thoughts scattered across the page.",
-    "matches": [
-      {
-        "id": "words-sample-v1-01",
-        "score": 0.719
-      }
-    ]
-  },
-  {
-    "id": "words-sample-v1-07",
-    "createdAt": "2026-07-30T17:00:00.000Z",
-    "reflection": "This entry has a quiet, self-deprecating tone with a hint of subtle breakthrough.",
-    "matches": [
-      {
-        "id": "words-sample-v1-02",
-        "score": 0.714
-      }
-    ]
-  },
-  {
-    "id": "words-sample-v1-08",
+    "id": "words-demo-v1-01",
     "createdAt": "2026-08-04T17:00:00.000Z",
-    "reflection": "This entry has a quiet, introspective quality with a hint of déjà vu.",
+    "reflection": "The value of this project seems tied to your ability to build it alone.",
     "matches": []
   },
   {
-    "id": "words-sample-v1-09",
-    "createdAt": "2026-08-09T17:00:00.000Z",
-    "reflection": "This entry has a calm, methodical quality to it, with a sense of intentional structure.",
-    "matches": [
-      {
-        "id": "words-sample-v1-04",
-        "score": 0.793
-      }
-    ]
+    "id": "words-demo-v1-02",
+    "createdAt": "2026-08-07T17:00:00.000Z",
+    "reflection": "If the self is a thread pulled through time, then the writer and the words are connected yet distinct.",
+    "matches": []
   },
   {
-    "id": "words-sample-v1-10",
+    "id": "words-demo-v1-03",
+    "createdAt": "2026-08-11T17:00:00.000Z",
+    "reflection": "Unplanned ordinary moments feel happy here, and noticing them while they happen seems to be the key.",
+    "matches": []
+  },
+  {
+    "id": "words-demo-v1-04",
     "createdAt": "2026-08-14T17:00:00.000Z",
-    "reflection": "This entry has a gentle, observational quality to it, with a focus on the small joys of everyday life.",
+    "reflection": "Seeing your work in others' hands feels like a shared moment of connection.",
     "matches": []
   },
   {
-    "id": "words-sample-v1-11",
-    "createdAt": "2026-08-26T17:00:00.000Z",
-    "reflection": "The entry meanders through fragmented thoughts, with a loose, conversational tone.",
+    "id": "words-demo-v1-05",
+    "createdAt": "2026-08-18T17:00:00.000Z",
+    "reflection": "Fixing bugs makes you question the idea and your ability, creating a loop of doubt.",
+    "matches": []
+  },
+  {
+    "id": "words-demo-v1-06",
+    "createdAt": "2026-08-21T17:00:00.000Z",
+    "reflection": "Memory threads the old self to the new one, yet swapping beliefs challenges that continuity.",
     "matches": [
       {
-        "id": "words-sample-v1-06",
-        "score": 0.708
-      },
-      {
-        "id": "words-sample-v1-01",
+        "id": "words-demo-v1-02",
         "score": 0.681
       }
     ]
   },
   {
-    "id": "words-sample-v1-12",
-    "createdAt": "2026-08-29T17:00:00.000Z",
-    "reflection": "This entry has a quiet, introspective quality, with a sense of gentle self-awareness.",
+    "id": "words-demo-v1-07",
+    "createdAt": "2026-08-25T17:00:00.000Z",
+    "reflection": "The ordinary, unscheduled moments seem to hold the most happiness here, and noticing them in the moment feels like a growing skill.",
     "matches": []
   },
   {
-    "id": "words-sample-v1-13",
+    "id": "words-demo-v1-08",
+    "createdAt": "2026-08-28T17:00:00.000Z",
+    "reflection": "The excitement of sharing something built start to finish feels like a natural release of energy.",
+    "matches": []
+  },
+  {
+    "id": "words-demo-v1-09",
     "createdAt": "2026-09-01T17:00:00.000Z",
-    "reflection": "This entry has a practical, problem-solving quality to it.",
+    "reflection": "Refining an idea and losing faith in it feel very close, and telling them apart seems hard.",
     "matches": [
       {
-        "id": "words-sample-v1-03",
-        "score": 0.792
+        "id": "words-demo-v1-01",
+        "score": 0.751
+      },
+      {
+        "id": "words-demo-v1-05",
+        "score": 0.685
       }
     ]
   },
   {
-    "id": "words-sample-v1-14",
+    "id": "words-demo-v1-10",
     "createdAt": "2026-09-04T17:00:00.000Z",
-    "reflection": "This entry has a calm, methodical quality to it, with a sense of intentional structure.",
+    "reflection": "The river and the writer both change, yet memory lets you recognize yourself in the flow.",
+    "matches": []
+  },
+  {
+    "id": "words-demo-v1-11",
+    "createdAt": "2026-09-08T17:00:00.000Z",
+    "reflection": "Happiness can be found in ordinary, unplanned moments without needing to finish anything.",
     "matches": [
       {
-        "id": "words-sample-v1-04",
-        "score": 0.827
-      },
-      {
-        "id": "words-sample-v1-09",
-        "score": 0.795
+        "id": "words-demo-v1-07",
+        "score": 0.691
       }
     ]
   },
   {
-    "id": "words-sample-v1-15",
-    "createdAt": "2026-09-07T17:00:00.000Z",
-    "reflection": "This entry has a relaxed, unhurried quality to it, with a gentle pace that matches the leisurely activities described.",
-    "matches": []
-  },
-  {
-    "id": "words-sample-v1-16",
+    "id": "words-demo-v1-12",
     "createdAt": "2026-09-11T17:00:00.000Z",
-    "reflection": "This entry has a contemplative, meandering quality to it, with a sense of longing for connection and memory.",
-    "matches": [
-      {
-        "id": "words-sample-v1-01",
-        "score": 0.854
-      },
-      {
-        "id": "words-sample-v1-06",
-        "score": 0.788
-      },
-      {
-        "id": "words-sample-v1-11",
-        "score": 0.697
-      }
-    ]
-  },
-  {
-    "id": "words-sample-v1-17",
-    "createdAt": "2026-09-14T17:00:00.000Z",
-    "reflection": "This entry has a quiet, hesitant quality to it, with a sense of tentative vulnerability.",
-    "matches": [
-      {
-        "id": "words-sample-v1-07",
-        "score": 0.809
-      },
-      {
-        "id": "words-sample-v1-12",
-        "score": 0.761
-      },
-      {
-        "id": "words-sample-v1-02",
-        "score": 0.717
-      }
-    ]
-  },
-  {
-    "id": "words-sample-v1-18",
-    "createdAt": "2026-09-17T17:00:00.000Z",
-    "reflection": "The entry has a slow, meandering quality to it.",
-    "matches": [
-      {
-        "id": "words-sample-v1-08",
-        "score": 0.746
-      },
-      {
-        "id": "words-sample-v1-03",
-        "score": 0.739
-      }
-    ]
-  },
-  {
-    "id": "words-sample-v1-19",
-    "createdAt": "2026-09-20T17:00:00.000Z",
-    "reflection": "This entry has a deliberate, almost ritualistic quality to it, with a focus on establishing a daily routine.",
-    "matches": [
-      {
-        "id": "words-sample-v1-04",
-        "score": 0.797
-      },
-      {
-        "id": "words-sample-v1-14",
-        "score": 0.773
-      },
-      {
-        "id": "words-sample-v1-09",
-        "score": 0.762
-      }
-    ]
-  },
-  {
-    "id": "words-sample-v1-20",
-    "createdAt": "2026-09-22T17:00:00.000Z",
-    "reflection": "This entry has a peaceful, understated quality to it, with a focus on simple pleasures.",
+    "reflection": "Sharing work made start to finish feels like letting something personal enter other people's hands.",
     "matches": []
+  },
+  {
+    "id": "words-demo-v1-13",
+    "createdAt": "2026-09-15T17:00:00.000Z",
+    "reflection": "Doubting both the idea and your ability to execute it seems to block shipping.",
+    "matches": [
+      {
+        "id": "words-demo-v1-09",
+        "score": 0.767
+      },
+      {
+        "id": "words-demo-v1-05",
+        "score": 0.689
+      }
+    ]
+  },
+  {
+    "id": "words-demo-v1-14",
+    "createdAt": "2026-09-18T17:00:00.000Z",
+    "reflection": "Memory and identity both matter here, and losing the thread seems to risk losing the self.",
+    "matches": []
+  },
+  {
+    "id": "words-demo-v1-15",
+    "createdAt": "2026-09-22T17:00:00.000Z",
+    "reflection": "The ordinary and unplanned hold happiness, and noticing it while it happens seems to be the key.",
+    "matches": []
+  },
+  {
+    "id": "words-demo-v1-16",
+    "createdAt": "2026-09-25T17:00:00.000Z",
+    "reflection": "Words coming easily and work nearly ready to share both feel like a quiet celebration.",
+    "matches": [
+      {
+        "id": "words-demo-v1-12",
+        "score": 0.733
+      }
+    ]
+  },
+  {
+    "id": "words-demo-v1-17",
+    "createdAt": "2026-09-29T17:00:00.000Z",
+    "reflection": "The fear of losing readers once they open the book weighs heavily on the idea's worth.",
+    "matches": []
+  },
+  {
+    "id": "words-demo-v1-18",
+    "createdAt": "2026-10-01T17:00:00.000Z",
+    "reflection": "Identity feels like a thread pulled through changes, where remembering keeps it intact.",
+    "matches": [
+      {
+        "id": "words-demo-v1-14",
+        "score": 0.775
+      },
+      {
+        "id": "words-demo-v1-02",
+        "score": 0.772
+      },
+      {
+        "id": "words-demo-v1-06",
+        "score": 0.709
+      }
+    ]
+  },
+  {
+    "id": "words-demo-v1-19",
+    "createdAt": "2026-10-03T17:00:00.000Z",
+    "reflection": "Happiness lives in the ordinary, and noticing it right as it happens feels like a gift.",
+    "matches": [
+      {
+        "id": "words-demo-v1-07",
+        "score": 0.728
+      },
+      {
+        "id": "words-demo-v1-11",
+        "score": 0.728
+      },
+      {
+        "id": "words-demo-v1-03",
+        "score": 0.708
+      }
+    ]
+  },
+  {
+    "id": "words-demo-v1-20",
+    "createdAt": "2026-10-05T17:00:00.000Z",
+    "reflection": "Making something for others feels exciting, yet nervousness about their hands seems natural.",
+    "matches": [
+      {
+        "id": "words-demo-v1-12",
+        "score": 0.825
+      },
+      {
+        "id": "words-demo-v1-16",
+        "score": 0.762
+      },
+      {
+        "id": "words-demo-v1-08",
+        "score": 0.699
+      }
+    ]
   }
 ]
