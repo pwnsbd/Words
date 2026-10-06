@@ -1,0 +1,473 @@
+{
+  "generatedAt": "2026-10-06T03:44:32.159Z",
+  "results": {
+    "Llama 3.1 8B": {
+      "label": "Llama 3.1 8B",
+      "file": "reflection-model.gguf",
+      "reflections": [
+        {
+          "index": 0,
+          "daysAgo": 90,
+          "ms": 5916,
+          "reflection": "You're revisiting ideas from the past, and this entry is a reminder that your thoughts can evolve over time.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 1,
+          "daysAgo": 85,
+          "ms": 5244,
+          "reflection": "Perfection seems to be a barrier to sharing your work with others, and this might be costing you progress.",
+          "mood": -1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 2,
+          "daysAgo": 80,
+          "ms": 3223,
+          "reflection": "You're using a concise function to remove duplicates from an array.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 3,
+          "daysAgo": 75,
+          "ms": 5163,
+          "reflection": "Protecting time for a difficult task before the day's meetings seems to be a strategy that's working for you.",
+          "mood": 2,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 4,
+          "daysAgo": 70,
+          "ms": 4768,
+          "reflection": "The pleasure of a simple evening seems to be a deliberate choice, rather than a default.",
+          "mood": 2,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 5,
+          "daysAgo": 60,
+          "ms": 6634,
+          "reflection": "You've had similar thoughts about this before, on 2023-02-15: 'I've been thinking about how my life would be different if I didn't have to work a 9-to-5 job.'",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 6,
+          "daysAgo": 55,
+          "ms": 5939,
+          "reflection": "Your fear of imperfection seems to be holding you back from starting, and sending a rough draft may have helped you feel more comfortable with the process.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 7,
+          "daysAgo": 50,
+          "ms": 5425,
+          "reflection": "You've found a concise solution to a common problem, and now you're wondering if you've encountered it before.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 8,
+          "daysAgo": 45,
+          "ms": 5262,
+          "reflection": "Starting the day with a block of focused time on a personal priority seems to help you feel more in control.",
+          "mood": 2,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 9,
+          "daysAgo": 40,
+          "ms": 4409,
+          "reflection": "The act of nurturing the basil seems to bring a sense of gentle satisfaction.",
+          "mood": 2,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 10,
+          "daysAgo": 28,
+          "ms": 3696,
+          "reflection": "You've been considering this idea since June, and it's evolved over time.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 11,
+          "daysAgo": 25,
+          "ms": 4484,
+          "reflection": "You're considering the value of sharing unfinished work to learn from others' feedback.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 12,
+          "daysAgo": 22,
+          "ms": 5459,
+          "reflection": "You used a Set to remove duplicates from the list of tags, which can be a useful technique for handling repeated values.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 13,
+          "daysAgo": 19,
+          "ms": 4587,
+          "reflection": "Starting the day with uninterrupted work time seems to have a positive impact on your meetings.",
+          "mood": 2,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 14,
+          "daysAgo": 16,
+          "ms": 4655,
+          "reflection": "It seems like you've been craving a sense of spontaneity and freedom from structure.",
+          "mood": 2,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 15,
+          "daysAgo": 12,
+          "ms": 5689,
+          "reflection": "You're drawn to the idea of a notebook that remembers with you, suggesting a desire for continuity and connection between past and present thoughts.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 16,
+          "daysAgo": 9,
+          "ms": 5266,
+          "reflection": "The desire for perfection is holding you back from taking the first step, and sharing something imperfect feels like a step forward.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 17,
+          "daysAgo": 6,
+          "ms": 3659,
+          "reflection": "You're considering multiple options, and it's unclear which one to choose.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 18,
+          "daysAgo": 3,
+          "ms": 5464,
+          "reflection": "You're considering setting aside dedicated time to complete a challenging task, and this daily quiet hour may be crucial for its completion.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 19,
+          "daysAgo": 1,
+          "ms": 5167,
+          "reflection": "The simple pleasure of a cup of coffee and a quiet moment outside seems to be enough for now.",
+          "mood": 2,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        }
+      ],
+      "pattern": {
+        "ms": 6686,
+        "result": {
+          "title": "Tracking Recurring Ideas",
+          "description": "The writer wants to track and connect recurring ideas across different entries, even when expressed in different words.",
+          "isPattern": true
+        },
+        "failed": false,
+        "errors": [],
+        "thinkLeak": false
+      },
+      "letter": {
+        "ms": 9265,
+        "inputCount": 6,
+        "text": "It's been a week of navigating the tension between structure and spontaneity, with a deep-seated desire for freedom and flexibility emerging. You've been drawn to the idea of a notebook that remembers, suggesting a longing for continuity and connection between past and present thoughts. As you weigh your options and consider the best path forward, it's clear that you're taking small steps towards embracing imperfection and finding your own pace.",
+        "failed": false,
+        "errors": [],
+        "thinkLeak": false
+      },
+      "loadMs": 14688,
+      "summary": {
+        "loadMs": 14688,
+        "avgMs": 5005,
+        "p95Ms": 5939,
+        "nulls": 0,
+        "parseFailures": 0,
+        "thinkLeaks": 0
+      }
+    },
+    "Qwen3.5-9B": {
+      "label": "Qwen3.5-9B",
+      "file": "Qwen3.5-9B-Q4_K_M.gguf",
+      "reflections": [
+        {
+          "index": 0,
+          "daysAgo": 90,
+          "ms": 10713,
+          "reflection": "Writing freely and noticing the quiet threads that connect to old ideas both matter here, and seeing those links seems to help the new thoughts stay grounded in what has come before.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 1,
+          "daysAgo": 85,
+          "ms": 8456,
+          "reflection": "Waiting for perfection seems to protect the work from judgment, yet it also stalls the progress that comes from sharing it.",
+          "mood": -1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 2,
+          "daysAgo": 80,
+          "ms": 9649,
+          "reflection": "This small helper keeps the first appearance of each item, which seems to be the right balance between removing duplicates and preserving the original order.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 3,
+          "daysAgo": 75,
+          "ms": 9707,
+          "reflection": "Protecting the first hour of the morning seems to be where your best work happens, and avoiding notifications helps you finish what you had been putting off.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 4,
+          "daysAgo": 70,
+          "ms": 8833,
+          "reflection": "The warmth of the kitchen and the lack of urgency seem to create a space where simple pleasure can take root.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 5,
+          "daysAgo": 60,
+          "ms": 9092,
+          "reflection": "Tracking how your thinking changes over time seems to be the goal here, and recognizing older passages might help you see those shifts more clearly.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 6,
+          "daysAgo": 55,
+          "ms": 9447,
+          "reflection": "The relief you felt after sending one paragraph suggests that tolerating a rough first attempt is the key to moving forward, rather than waiting for perfection.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 7,
+          "daysAgo": 50,
+          "ms": 9453,
+          "reflection": "This familiar solution feels like a quiet confirmation that you have been here before, turning a current technical hurdle into a memory of past success.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 8,
+          "daysAgo": 45,
+          "ms": 9515,
+          "reflection": "Starting the day with something of your own made the morning feel less scattered, and protecting that time seems to be the key to that clarity.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 9,
+          "daysAgo": 40,
+          "ms": 8683,
+          "reflection": "There is a quiet satisfaction in noticing how small adjustments to care can invite a plant to show its new growth.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 10,
+          "daysAgo": 28,
+          "ms": 8508,
+          "reflection": "Finding an earlier version of a thought suggests that ideas have a history, and linking back to the original words honors that evolution.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 11,
+          "daysAgo": 25,
+          "ms": 9330,
+          "reflection": "Sharing a rough draft early seems to offer more learning than waiting for perfection, and letting a colleague read something unfinished breaks the cycle of private polishing.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 12,
+          "daysAgo": 22,
+          "ms": 7689,
+          "reflection": "A simple tool like this becomes a useful reminder whenever a list repeats itself.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 13,
+          "daysAgo": 19,
+          "ms": 8521,
+          "reflection": "Beginning with a single meaningful task seems to change how the later meetings feel, making them less overwhelming.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 14,
+          "daysAgo": 16,
+          "ms": 8602,
+          "reflection": "There is a quiet pleasure in letting the day unfold without a plan, and noticing that enjoyment seems to be returning.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 15,
+          "daysAgo": 12,
+          "ms": 9301,
+          "reflection": "A notebook that remembers with you seems to value the continuity of thought over the novelty of phrasing, making the echo of old ideas easier to see.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 16,
+          "daysAgo": 9,
+          "ms": 8467,
+          "reflection": "Sharing an imperfect draft feels like a way to move forward, yet the desire for perfection still holds the first step back.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 17,
+          "daysAgo": 6,
+          "ms": 9731,
+          "reflection": "The tension between removing repeated values and keeping the original order is resolved here by tracking what has been seen while preserving the sequence of the first occurrences.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 18,
+          "daysAgo": 3,
+          "ms": 8944,
+          "reflection": "This promise to protect the morning hour seems to be a way of creating space for difficult work before the day's demands arrive.",
+          "mood": 0,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        },
+        {
+          "index": 19,
+          "daysAgo": 1,
+          "ms": 9023,
+          "reflection": "Less bitterness and a quiet moment outside both seem to matter here, and finding enough in nothing much feels like a gentle balance.",
+          "mood": 1,
+          "failed": false,
+          "errors": [],
+          "thinkLeak": false
+        }
+      ],
+      "pattern": {
+        "ms": 8210,
+        "result": {
+          "title": "",
+          "description": "",
+          "isPattern": false
+        },
+        "failed": false,
+        "errors": [],
+        "thinkLeak": false
+      },
+      "letter": {
+        "ms": 13758,
+        "inputCount": 6,
+        "text": "There is a gentle rhythm emerging this week, where the joy of simply letting the day unfold begins to outweigh the need for rigid plans. You seem to be finding a quiet balance in the continuity of your thoughts, allowing imperfect drafts and simple moments outside to move you forward without the heavy weight of perfection. It feels like you are slowly reclaiming space for difficult work by protecting those early hours, discovering that enough can be found in very little.",
+        "failed": false,
+        "errors": [],
+        "thinkLeak": false
+      },
+      "loadMs": 24138,
+      "summary": {
+        "loadMs": 24138,
+        "avgMs": 9083,
+        "p95Ms": 9731,
+        "nulls": 0,
+        "parseFailures": 0,
+        "thinkLeaks": 0
+      }
+    }
+  }
+}

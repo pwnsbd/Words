@@ -15,6 +15,7 @@
     "dist:win": "electron-vite build && electron-builder --win",
     "test:memory": "node scripts/test-memory.mjs",
     "eval:mirror": "node scripts/eval-mirror.mjs",
+    "eval:reflection": "node scripts/eval-reflection.mjs",
     "test:memory:model": "node scripts/test-memory.mjs --model",
     "seed:demo": "node scripts/seed-demo.mjs",
     "test:patterns": "node scripts/test-patterns.mjs",
