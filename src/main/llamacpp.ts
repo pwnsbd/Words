@@ -126,7 +126,7 @@ function modelsDir(): string {
 }
 
 function reflectionFile(): string {
-  return process.env.WORDS_REFLECTION_MODEL_FILE || 'reflection-model.gguf'
+  return process.env.WORDS_REFLECTION_MODEL_FILE || 'Qwen3.5-9B-Q4_K_M.gguf'
 }
 function embeddingFile(): string {
   return process.env.WORDS_EMBEDDING_MODEL_FILE || 'Qwen3-Embedding-0.6B-Q8_0.gguf'

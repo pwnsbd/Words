@@ -37,8 +37,8 @@ interface DefaultModel {
 const DEFAULT_MODELS: DefaultModel[] = [
   {
     key: 'reflection',
-    url: 'https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf',
-    approxBytes: 4_920_000_000
+    url: 'https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-Q4_K_M.gguf',
+    approxBytes: 5_680_522_464
   },
   {
     key: 'embedding',

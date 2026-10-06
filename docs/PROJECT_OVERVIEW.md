@@ -38,7 +38,7 @@ Original product brief: `words-app-brief.md`. Full feature notes: `README.md`.
 - **Shell:** Electron + electron-vite. React renderer (`src/renderer/src/App.tsx`, ~1,500 lines, one large component file), main process in `src/main/`, preload bridge in `src/preload/`, shared types in `src/shared/`.
 - **Inference:** in-process via **node-llama-cpp** (llama.cpp bindings). No Ollama or separate service. GPU offload via CUDA or Vulkan is auto-detected, with CPU fallback (`WORDS_GPU_LAYERS=0`).
 - **Fixed model pair:**
-  - Reflections, patterns and letters: **Llama 3.1 8B Instruct**, Q4_K_M GGUF (~4.9 GB).
+  - Reflections, patterns and letters: **Qwen3.5 9B**, Q4_K_M GGUF (~5.7 GB, Apache 2.0; thinking is turned off at the chat wrapper).
   - Memory embeddings: **Qwen3 Embedding 0.6B**, Q8_0 GGUF (~640 MB).
 - **Model download:** `src/main/modelDownload.ts` streams from Hugging Face to `.part` files, then renames them into place. It runs in the background on first launch, never blocks writing, and can be retried from Settings. The models folder can be moved in Settings (files are moved, not re-downloaded).
 - **Storage:** one JSON file per entry in `%APPDATA%\words\entries\`, plus `settings.json` and `idea-patterns.json` beside them. Models live in `<install dir>\models\` by default. The uninstaller removes the models and *asks* before deleting the journal.
@@ -47,7 +47,7 @@ Original product brief: `words-app-brief.md`. Full feature notes: `README.md`.
 ### Save pipeline
 1. User writes; Ctrl+Enter saves instantly to JSON.
 2. Entry is split into **passages** and embedded (Qwen), then compared with all earlier passages. Up to 3 matches show the older passage, its date and an "open entry" link.
-3. In parallel, Llama writes a one-line soft **reflection** plus a hidden **mood weight** (-2..2). It fades in when ready.
+3. In parallel, Qwen writes a one-line soft **reflection** plus a hidden **mood weight** (-2..2). It fades in when ready.
 4. Struck-through words (ink mode) are stripped before anything reaches a model.
 
 ## 4. Features
@@ -55,7 +55,7 @@ Original product brief: `words-app-brief.md`. Full feature notes: `README.md`.
 ### The mirror (core)
 - **Passage-level resurfacing.** Overlapping passages are compared, so an idea buried in a long entry can match earlier writing with different wording. All earlier dates are eligible. Sensitivity is configurable in Settings.
 - **Model identity on vectors.** Vectors are keyed by model/file/prefix/version, so different embedding models never mix. Old whole-entry vectors migrate automatically, and "Rebuild memory with the active model" re-embeds everything.
-- **Patterns** (knotted-thread button above the journal). Recurring *ideas, questions, tensions and ways of reasoning*, not moods. A pattern needs passages from ≥3 entries on ≥3 different days, all mutually similar (loose chains are rejected). Llama names each pattern; dates, counts and excerpts come from the entries themselves. "These aren't related" dismisses a pattern permanently. Results are cached and recalculated in the background.
+- **Patterns** (knotted-thread button above the journal). Recurring *ideas, questions, tensions and ways of reasoning*, not moods. A pattern needs passages from ≥3 entries on ≥3 different days, all mutually similar (loose chains are rejected). Qwen names each pattern; dates, counts and excerpts come from the entries themselves. "These aren't related" dismisses a pattern permanently. Results are cached and recalculated in the background.
 - **Recurring themes.** One gentle sentence above the journal list, shown only if a real recurring feeling exists in the last 30 days (needs ≥5 entries).
 - **Letters from the past.** On-demand reflective letters for a week, month or year, opened with candle controls that light when opened. Weeks run Sunday to Saturday, and letters can be created for past periods that don't have one yet. Saved letters have list and grid views.
 
@@ -100,13 +100,13 @@ Original product brief: `words-app-brief.md`. Full feature notes: `README.md`.
 
 1. **Matching quality is uncalibrated.** Similarity thresholds are starting values, tested only on local paraphrases. This is the biggest risk to the one job.
 2. **Cold start.** The mirror shows nothing until several entries exist, so a new user may not see the point in week one.
-3. **Hardware floor.** Llama 8B wants a GPU with ~6 GB+ VRAM for good speed. CPU works but is slow. There is no smaller-model fallback in the UI (the model pair is fixed), and no documented minimum spec yet.
+3. **Hardware floor.** The 9B reflection model wants a GPU with ~6 GB+ VRAM for good speed. CPU works but is slow. There is no smaller-model fallback in the UI (the model pair is fixed), and no documented minimum spec yet.
 4. **5.5 GB first-run download** with no up-front size or disk-space warning (Rasa added a free-space preflight).
 5. **Unsigned installer.** Windows SmartScreen will warn every new user.
 6. **No auto-update.** Unverified whether electron-builder publishes `latest.yml`; there is no update check in the app.
 7. **Scale.** Patterns uses an in-memory scan, and large journals (years of entries) are untested for speed.
 8. **Data safety.** Entries are plain JSON with no encryption at rest, no backup/export feature, and no corruption recovery beyond the files themselves.
-9. **Licence obligations.** Llama 3.1's licence asks for "Built with Llama" attribution in the UI or docs, which isn't added yet. Model and font licence text was written from memory and needs checking against the source.
+9. **Licence obligations.** Qwen3.5 and Qwen3 Embedding are Apache 2.0, so no attribution banner is needed (the Llama 3.1 "Built with Llama" obligation goes away with the swap). Model and font licence text was written from memory and needs checking against the source.
 10. **Testing.** No CI and no unit-test framework; the custom editor (writing modes, IME, spellcheck) has no automated tests.
 11. **Accessibility.** The custom editor and dial need a screen-reader and keyboard-only review (role=textbox on a div).
 12. **Windows only.** No macOS or Linux build.

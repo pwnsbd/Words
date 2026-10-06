@@ -6,8 +6,6 @@ runtime, and bundles one font. Licenses were read from each package's
 `package.json` / the official model card as of 2026-10. If a dependency,
 model or font is swapped or upgraded, re-check its license before shipping.
 
-**Built with Llama.**
-
 ## Runtime npm dependencies
 
 | Package | Version | License |
@@ -33,30 +31,18 @@ is MIT and bundles Chromium under its own notices (shipped with the app as
 
 | Model | Used for | License | Source |
 |---|---|---|---|
-| Meta Llama 3.1 8B Instruct (GGUF quant by `bartowski`) | Reflections, letters, patterns | Llama 3.1 Community License | [Model card](https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF) |
+| Qwen3.5 9B (GGUF Q4_K_M quant by `unsloth`) | Reflections, letters, patterns | Apache-2.0 | [Model card](https://huggingface.co/unsloth/Qwen3.5-9B-GGUF) |
 | Qwen3 Embedding 0.6B (GGUF, Q8_0) | Memory / semantic search embeddings | Apache-2.0 | [Model card](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF) |
 
-### Llama 3.1 Community License
+### Qwen3.5 9B
 
-Llama 3.1 is licensed under the Llama 3.1 Community License, Copyright (c)
-Meta Platforms, Inc. All Rights Reserved. Full text:
-https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/LICENSE
+Apache-2.0, Copyright Alibaba Cloud / Qwen team. License text:
+https://www.apache.org/licenses/LICENSE-2.0
 
-Key obligations that apply to Words:
-
-- **Attribution:** "Built with Llama" must be displayed prominently on a
-  related website, user interface, blogpost, about page or product
-  documentation when a product uses Llama materials. Words complies by stating
-  it in this file; keep it visible in the app's about/README as well.
-- Any copy of the model that is redistributed must include the license
-  agreement and the notice "Llama 3.1 is licensed under the Llama 3.1
-  Community License, Copyright (c) Meta Platforms, Inc. All Rights Reserved."
-- Use is subject to Meta's Acceptable Use Policy:
-  https://llama.com/llama3_1/use-policy
-- Products with more than 700 million monthly active users require a separate
-  license from Meta.
-- Outputs of Llama may not be used to improve another LLM (other than Llama
-  and its derivatives).
+Words no longer uses Meta Llama 3.1, so the Llama 3.1 Community License
+obligations (including "Built with Llama" attribution) no longer apply to the
+default configuration. If the old `reflection-model.gguf` is kept and selected
+with `WORDS_REFLECTION_MODEL_FILE`, that file remains under its own license.
 
 ### Qwen3 Embedding 0.6B
 
