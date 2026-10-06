@@ -12,10 +12,12 @@ import ts from 'typescript'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const modelsDir = process.env.WORDS_MODELS_DIR || join(root, 'models')
+// --quick: Qwen only, 6 reflections, positive + negative pattern, 2 back-to-back calls; writes no docs.
+const QUICK = process.argv.includes('--quick')
 const MODELS = [
   { label: 'Llama 3.1 8B', file: 'reflection-model.gguf' },
   { label: 'Qwen3.5-9B', file: 'Qwen3.5-9B-Q4_K_M.gguf' }
-]
+].filter(m => !QUICK || m.label.startsWith('Qwen'))
 const missing = MODELS.filter(m => !existsSync(join(modelsDir, m.file)))
 if (missing.length) {
   console.error(`Model file(s) not found in ${modelsDir}: ${missing.map(m => m.file).join(', ')}\nSet WORDS_MODELS_DIR or place them in models/.`)
@@ -49,21 +51,18 @@ const { reflect, describePattern, writeLetterForTimeframe, resetModelContexts } 
 
 const entries = JSON.parse(readFileSync(join(root, 'sample-entries.json'), 'utf8'))
 const patternIdx = [0, 5, 10, 15] // four paraphrases of one idea (journal-memory group)
+const negativeIdx = [4, 9, 14, 19] // unrelated entries: must not be a pattern
 const leak = s => typeof s === 'string' && /<\/?think/i.test(s)
 const ms = n => Math.round(n)
-// The app disposes each chat sequence without awaiting it, and Qwen3.5 frees its sequence a moment later than
-// Llama does. If the app's own call reports "No sequences left", wait for the slot and retry; only the
-// successful attempt is timed, so the wait is not counted as model latency.
+// Single attempt, no retry: the app awaits sequence.dispose(), so back-to-back calls must succeed as they are.
 const timed = async fn => {
-  for (let attempt = 0; ; attempt++) {
-    errors.length = 0
-    const t = performance.now()
-    const value = await fn()
-    const elapsed = performance.now() - t
-    if (!errors.some(e => e.includes('No sequences left')) || attempt >= 100) return { value, ms: elapsed }
-    await new Promise(r => setTimeout(r, 250))
-  }
+  errors.length = 0
+  const t = performance.now()
+  const value = await fn()
+  return { value, ms: performance.now() - t }
 }
+const words = s => s.trim().split(/\s+/).filter(Boolean).length
+const median = list => { const s = [...list].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2 }
 const stats = list => {
   if (!list.length) return { avg: null, p95: null }
   const s = [...list].sort((a, b) => a - b)
@@ -83,6 +82,7 @@ try {
     r.loadMs = ms(load.ms)
     console.log(`load + warm-up: ${r.loadMs} ms`, errors.join(' | '))
     for (const [i, e] of entries.entries()) {
+      if (QUICK && i >= 6) break
       errors.length = 0
       const t = await timed(() => reflect(e.text))
       const out = t.value
@@ -97,14 +97,33 @@ try {
     const p = await timed(() => describePattern(patternIdx.map(i => entries[i].text)))
     r.pattern = { ms: ms(p.ms), result: p.value, failed: !p.value, errors: [...errors], thinkLeak: p.value ? leak(p.value.title + p.value.description) : false }
     console.log('pattern', JSON.stringify(p.value))
+    errors.length = 0
+    const n = await timed(() => describePattern(negativeIdx.map(i => entries[i].text)))
+    r.negative = { ms: ms(n.ms), result: n.value, failed: !n.value, errors: [...errors], thinkLeak: n.value ? leak(n.value.title + n.value.description) : false }
+    console.log('negative', JSON.stringify(n.value))
+    // Back-to-back: two different calls straight after each other, no retry.
+    errors.length = 0
+    const b1 = await reflect(entries[0].text)
+    const b2 = await describePattern(patternIdx.map(i => entries[i].text))
+    r.backToBack = { ok: !!b1 && !!b2, errors: [...errors] }
+    console.log('back-to-back', r.backToBack.ok && !errors.length ? 'clean' : 'FAILED ' + errors.join(' | ').slice(0, 200))
     // Week letter from this model's own reflections of the 6 most recent sample entries (newest first).
+    if (QUICK) {
+      const w = r.reflections.filter(x => x.reflection).map(x => words(x.reflection))
+      r.summary = { nulls: r.reflections.filter(x => x.failed).length, wordsMedian: w.length ? median(w) : null, wordsMax: Math.max(0, ...w), leaks: r.reflections.filter(x => x.thinkLeak).length }
+      results[m.label] = r
+      continue
+    }
     const recent = r.reflections.filter(x => x.reflection).sort((a, b) => a.daysAgo - b.daysAgo).slice(0, 6)
     errors.length = 0
     const l = await timed(() => writeLetterForTimeframe(recent.map(x => x.reflection), 'week'))
     r.letter = { ms: ms(l.ms), inputCount: recent.length, text: l.value, failed: !l.value, errors: [...errors], thinkLeak: leak(l.value) }
     console.log('letter', l.value)
+    const w = r.reflections.filter(x => x.reflection).map(x => words(x.reflection))
     const lat = stats(r.reflections.filter(x => !x.failed).map(x => x.ms))
     r.summary = {
+      wordsMedian: w.length ? median(w) : null, wordsMax: Math.max(0, ...w),
+      backToBackClean: r.backToBack.ok && !r.backToBack.errors.length,
       loadMs: r.loadMs, avgMs: lat.avg, p95Ms: lat.p95,
       nulls: r.reflections.filter(x => x.failed).length,
       parseFailures: r.reflections.filter(x => x.errors.length).length + (r.pattern.errors.length ? 1 : 0) + (r.letter.errors.length ? 1 : 0),
@@ -117,6 +136,10 @@ try {
   rmSync(scratch, { recursive: true, force: true })
 }
 
+if (QUICK) {
+  for (const r of Object.values(results)) console.log(r.label, JSON.stringify(r.summary), 'pattern', r.pattern.result?.isPattern, JSON.stringify(r.pattern.result?.title), 'negative', r.negative.result?.isPattern, 'b2b', r.backToBack.ok && !r.backToBack.errors.length)
+  process.exit(0)
+}
 writeFileSync(join(root, 'docs/reflection-eval.json'), JSON.stringify({ generatedAt: new Date().toISOString(), results }, null, 2))
 
 // --- markdown ---
@@ -133,7 +156,9 @@ md.push('# Reflection model eval', '',
   `| Reflection latency p95 (ms) | ${a.summary.p95Ms} | ${b.summary.p95Ms} |`,
   `| Nulls (of ${entries.length}) | ${a.summary.nulls} | ${b.summary.nulls} |`,
   `| Parse failures / logged errors | ${a.summary.parseFailures} | ${b.summary.parseFailures} |`,
-  `| Outputs containing \`<think\` | ${a.summary.thinkLeaks} | ${b.summary.thinkLeaks} |`, '',
+  `| Outputs containing \`<think\` | ${a.summary.thinkLeaks} | ${b.summary.thinkLeaks} |`,
+  `| Reflection words median / max | ${a.summary.wordsMedian} / ${a.summary.wordsMax} | ${b.summary.wordsMedian} / ${b.summary.wordsMax} |`,
+  `| Back-to-back calls clean (no retry) | ${a.summary.backToBackClean} | ${b.summary.backToBackClean} |`, '',
   `Qwen/Llama average latency ratio: ${a.summary.avgMs && b.summary.avgMs ? (b.summary.avgMs / a.summary.avgMs).toFixed(2) : 'n/a'} (budget: about 1.5).`, '',
   '## Reflections', '', `| # | Entry | ${a.label} | ${b.label} |`, '|---|---|---|---|')
 entries.forEach((e, i) => md.push(`| ${i + 1} | ${cell(short(e.text))} | ${show(a.reflections[i])} | ${show(b.reflections[i])} |`))
@@ -142,6 +167,11 @@ const pat = r => r.pattern.result
   : `FAILED (${r.pattern.ms} ms)`
 md.push('', '## Pattern', '', `Four paraphrases of one idea: entries ${patternIdx.map(i => i + 1).join(', ')}.`, '',
   `| ${a.label} | ${b.label} |`, '|---|---|', `| ${pat(a)} | ${pat(b)} |`)
+const neg = r => r.negative.result
+  ? `isPattern: ${r.negative.result.isPattern}; title: ${cell(r.negative.result.title) || '(empty)'} (${r.negative.ms} ms)`
+  : `FAILED (${r.negative.ms} ms)`
+md.push('', `Negative check, four unrelated entries: ${negativeIdx.map(i => i + 1).join(', ')} (must be isPattern: false).`, '',
+  `| ${a.label} | ${b.label} |`, '|---|---|', `| ${neg(a)} | ${neg(b)} |`)
 md.push('', '## Week letter', '', `Written from each model's own reflections of the ${a.letter.inputCount}/${b.letter.inputCount} most recent entries.`, '')
 for (const r of [a, b]) md.push(`### ${r.label} (${r.letter.ms} ms)`, '', r.letter.text ? r.letter.text.split('\n').map(x => '> ' + x).join('\n') : '_FAILED_', '')
 writeFileSync(join(root, 'docs/reflection-eval.md'), md.join('\n'))
