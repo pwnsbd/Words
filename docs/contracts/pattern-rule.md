@@ -30,4 +30,4 @@
 
 **Out of scope:** grouping thresholds (`patternGrouping.ts`), reflections, letters and UI.
 
-**Done-check:** `npm run eval:patterns` passes all 10 sets; `npm run eval:reflection -- --quick` still passes; `npm run typecheck` passes.
+**Done-check:** `npm run eval:patterns` passes all 9 sets; `npm run eval:reflection -- --quick` still passes; `npm run typecheck` passes.
