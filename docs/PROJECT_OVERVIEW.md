@@ -106,7 +106,7 @@ Original product brief: `words-app-brief.md`. Full feature notes: `README.md`.
 6. **No auto-update.** Unverified whether electron-builder publishes `latest.yml`; there is no update check in the app.
 7. **Scale.** Patterns uses an in-memory scan, and large journals (years of entries) are untested for speed.
 8. **Data safety.** Entries are plain JSON with no encryption at rest, no backup/export feature, and no corruption recovery beyond the files themselves.
-9. **Licence obligations.** Qwen3.5 and Qwen3 Embedding are Apache 2.0, so no attribution banner is needed (the Llama 3.1 "Built with Llama" obligation goes away with the swap). Model and font licence text was written from memory and needs checking against the source.
+9. **Licence obligations.** Qwen3.5 and Qwen3 Embedding are Apache 2.0, so no attribution banner is needed. Model and font licence text was written from memory and needs checking against the source.
 10. **Testing.** No CI and no unit-test framework; the custom editor (writing modes, IME, spellcheck) has no automated tests.
 11. **Accessibility.** The custom editor and dial need a screen-reader and keyboard-only review (role=textbox on a div).
 12. **Windows only.** No macOS or Linux build.

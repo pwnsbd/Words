@@ -7,7 +7,7 @@ into `models/`.
 
 **Workflow for an actual A/B comparison:**
 1. Paste entry 1, save, note the reflection + mood dot.
-2. Swap `models/reflection-model.gguf` (and/or the embedding model) for a different one.
+2. Point `WORDS_REFLECTION_MODEL_FILE` (and/or `WORDS_EMBEDDING_MODEL_FILE`) at a different GGUF in `models/`.
 3. Restart `npm run dev` (models load once at startup and stay warm — a swap needs a restart to pick up).
 4. Paste the *same* entry text again and save it as a new entry, compare the two reflections side by side
    in the journal view.

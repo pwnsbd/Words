@@ -39,11 +39,6 @@ is MIT and bundles Chromium under its own notices (shipped with the app as
 Apache-2.0, Copyright Alibaba Cloud / Qwen team. License text:
 https://www.apache.org/licenses/LICENSE-2.0
 
-Words no longer uses Meta Llama 3.1, so the Llama 3.1 Community License
-obligations (including "Built with Llama" attribution) no longer apply to the
-default configuration. If the old `reflection-model.gguf` is kept and selected
-with `WORDS_REFLECTION_MODEL_FILE`, that file remains under its own license.
-
 ### Qwen3 Embedding 0.6B
 
 Apache-2.0, Copyright Alibaba Cloud / Qwen team. License text:

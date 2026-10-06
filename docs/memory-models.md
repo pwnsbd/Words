@@ -2,7 +2,7 @@
 
 Words uses one fixed pair:
 
-- **Reflection:** Qwen3.5 9B Q4_K_M (unsloth GGUF), `Qwen3.5-9B-Q4_K_M.gguf` (5,680,522,464 bytes). The previous Meta Llama 3.1 8B Instruct `reflection-model.gguf` is not deleted and can still be selected with `WORDS_REFLECTION_MODEL_FILE`.
+- **Reflection:** Qwen3.5 9B Q4_K_M (unsloth GGUF), `Qwen3.5-9B-Q4_K_M.gguf` (5,680,522,464 bytes). It is the only reflection model.
 - **Memory:** Qwen3 Embedding 0.6B Q8_0, `Qwen3-Embedding-0.6B-Q8_0.gguf` (639,150,592 bytes locally).
 
 The small reflection, reflection-off, and Nomic options have been removed. Previously saved model preferences normalize to this pair. No old model files are deleted. Custom filenames and prefixes remain developer environment overrides; the normal app configuration needs no choices.
