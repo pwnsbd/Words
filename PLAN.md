@@ -25,5 +25,7 @@
 | T8 | Tag v0.2.0, GitHub Release with installer | user confirms | — | release live | last |
 | T9 | Handwriting fonts: 3 per writing mode, chosen in Settings, stored per entry | builder | see docs/contracts/handwriting.md | contract done-check + user visual check | merged, size tuning pending |
 
+| T10 | Reflection model → Qwen3.5-9B: side-by-side eval (A), swap after user approves (B) | builder | see docs/contracts/reflection-model.md | contract done-check + user picks | A in progress |
+
 ## Cleanup left for the user
 - Delete stray `--help` (SQLite file), `.memory-smoke-*` dirs and `*.log` at repo root (now git-ignored).
