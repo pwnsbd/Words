@@ -4,7 +4,7 @@
 // standalone script (not importing llamacpp.ts directly) because that file
 // imports @electron-toolkit/utils, which touches `electron.app` at module
 // load time and crashes outside a real Electron process.
-import { getLlama, LlamaChatSession } from 'node-llama-cpp'
+import { getLlama, LlamaChatSession, resolveChatWrapper } from 'node-llama-cpp'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -13,7 +13,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 // root. (This standalone script can't read the app's settings.json, so a
 // folder picked in-app has to be passed here via the env var.)
 const modelsDir = process.env.WORDS_MODELS_DIR || join(__dirname, '..', 'models')
-const reflectionModelPath = join(modelsDir, 'reflection-model.gguf')
+const reflectionModelPath = join(modelsDir, process.env.WORDS_REFLECTION_MODEL_FILE || 'Qwen3.5-9B-Q4_K_M.gguf')
 const embeddingModelPath = join(modelsDir, 'Qwen3-Embedding-0.6B-Q8_0.gguf')
 
 const REFLECTION_SYSTEM_PROMPT = `You are a quiet, gentle presence reading someone's private journal entry at the
@@ -30,11 +30,11 @@ async function reflectOn(llama, text) {
   }
   const sequence = reflectionContext.getSequence()
   try {
-    const session = new LlamaChatSession({ contextSequence: sequence, systemPrompt: REFLECTION_SYSTEM_PROMPT })
+    const session = new LlamaChatSession({ contextSequence: sequence, chatWrapper: resolveChatWrapper(reflectionContext.model, { customWrapperSettings: { qwen: { thoughts: 'discourage' } } }), systemPrompt: REFLECTION_SYSTEM_PROMPT })
     const response = await session.prompt(text, { maxTokens: 80 })
     return response.trim() || null
   } finally {
-    sequence.dispose() // not awaited, same as production code
+    await sequence.dispose() // awaited, same as production code
   }
 }
 
